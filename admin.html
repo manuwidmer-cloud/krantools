@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Kran Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f5f5f3;
+  color: #2c2c2a;
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── LOGIN ── */
+#login-screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.login-box { width: 100%; max-width: 340px; }
+
+.login-label {
+  font-size: 11px;
+  color: #b4b2a9;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.login-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  line-height: 0.9;
+  color: #2c2c2a;
+  margin-bottom: 32px;
+}
+
+.login-title em { color: #f0c000; font-style: normal; }
+
+.login-input {
+  width: 100%;
+  background: #fff;
+  border: 0.5px solid #d3d1c7;
+  border-radius: 8px;
+  color: #2c2c2a;
+  font-size: 14px;
+  padding: 12px 14px;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.login-input:focus { border-color: #888780; }
+.login-input.error { border-color: #D85A30; }
+
+.login-btn {
+  width: 100%;
+  background: #2c2c2a;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.login-btn:hover { background: #444; }
+
+.login-error {
+  font-size: 12px;
+  color: #D85A30;
+  margin-top: 10px;
+  display: none;
+}
+
+/* ── ADMIN ── */
+#admin-screen { display: none; flex: 1; flex-direction: column; }
+
+.topbar {
+  border-bottom: 0.5px solid #d3d1c7;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 50px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: #2c2c2a;
+}
+
+.topbar-title em { color: #f0c000; font-style: normal; }
+
+.topbar-badge {
+  font-size: 10px;
+  color: #888780;
+  border: 0.5px solid #d3d1c7;
+  padding: 2px 8px;
+  border-radius: 100px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.topbar-link {
+  font-size: 12px;
+  color: #888780;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.topbar-link:hover { color: #2c2c2a; }
+
+.topbar-logout {
+  font-size: 12px;
+  color: #888780;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.topbar-logout:hover { color: #D85A30; }
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+
+/* ── LAYOUT ── */
+.admin-layout { display: flex; flex: 1; min-height: 0; }
+
+.sidebar {
+  width: 200px;
+  border-right: 0.5px solid #d3d1c7;
+  padding: 24px 0;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.sidebar-section {
+  font-size: 10px;
+  color: #b4b2a9;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 20px;
+  margin-bottom: 6px;
+  margin-top: 20px;
+}
+
+.sidebar-section:first-child { margin-top: 0; }
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  font-size: 13px;
+  color: #888780;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+  user-select: none;
+}
+
+.sidebar-item:hover { color: #2c2c2a; background: #f5f5f3; }
+.sidebar-item.active { color: #2c2c2a; border-left-color: #2c2c2a; background: #f5f5f3; }
+
+.s-dot { width: 5px; height: 5px; border-radius: 50%; background: #d3d1c7; flex-shrink: 0; }
+.sidebar-item.active .s-dot { background: #2c2c2a; }
+
+/* ── PANELS ── */
+.admin-main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.panel-header {
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid #d3d1c7;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.04em;
+  color: #2c2c2a;
+}
+
+.panel-meta { font-size: 12px; color: #b4b2a9; }
+
+/* ── TOGGLE ROWS ── */
+.toggle-list { display: flex; flex-direction: column; gap: 6px; }
+
+.toggle-wrap {
+  border: 0.5px solid #d3d1c7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  gap: 16px;
+}
+
+.toggle-name { font-size: 15px; font-weight: 500; color: #2c2c2a; }
+.toggle-desc { font-size: 12px; color: #888780; margin-top: 2px; }
+
+.toggle-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.toggle-status {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.toggle-status.on { background: #E1F5EE; color: #0F6E56; border: 0.5px solid #1D9E75; }
+.toggle-status.off { background: #f1efe8; color: #888780; border: 0.5px solid #d3d1c7; }
+
+.setup-btn {
+  font-size: 12px;
+  padding: 5px 14px;
+  border: 0.5px solid #b4b2a9;
+  border-radius: 7px;
+  background: transparent;
+  color: #5f5e5a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.setup-btn:hover { background: #f1efe8; color: #2c2c2a; }
+.setup-btn.open { background: #e8e7e3; color: #2c2c2a; border-color: #888780; }
+
+/* SWITCH */
+.switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #d3d1c7;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.slider::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 3px; top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.switch input:checked + .slider { background: #2c2c2a; }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+
+/* SETUP PANEL */
+.setup-panel { display: none; border-top: 0.5px solid #d3d1c7; }
+.setup-panel.open { display: block; }
+.setup-panel iframe { width: 100%; height: 640px; border: none; display: block; background: #f5f5f3; }
+
+/* ── SETTINGS ── */
+.settings-block { margin-bottom: 28px; max-width: 320px; }
+.settings-label { font-size: 11px; color: #888780; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+
+.settings-input {
+  width: 100%;
+  background: #fff;
+  border: 0.5px solid #d3d1c7;
+  border-radius: 8px;
+  color: #2c2c2a;
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+  margin-bottom: 8px;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.settings-input:focus { border-color: #888780; }
+
+.settings-btn {
+  background: #2c2c2a;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 18px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.settings-btn:hover { background: #444; }
+.msg { font-size: 12px; margin-top: 8px; display: none; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 0.5px solid #d3d1c7;
+  padding: 14px 40px;
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+footer span { font-size: 11px; color: #b4b2a9; letter-spacing: 0.06em; }
+</style>
+<style>
+.burger-nav{position:fixed;top:12px;right:14px;z-index:200}
+.burger-btn{width:38px;height:38px;background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0;transition:background 0.15s}
+.burger-btn:hover{background:#f1efe8}
+.burger-btn span{display:block;width:15px;height:1.5px;background:#2c2c2a;border-radius:2px;transition:all 0.2s}
+.burger-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger-btn.open span:nth-child(2){opacity:0}
+.burger-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger-overlay{display:none;position:fixed;inset:0;background:rgba(44,44,42,0.18);z-index:190;backdrop-filter:blur(2px)}
+.burger-overlay.open{display:block}
+.burger-drawer{position:fixed;top:0;right:-280px;width:260px;height:100%;background:#fff;border-left:0.5px solid #d3d1c7;z-index:195;padding:64px 0 32px;transition:right 0.25s cubic-bezier(0.25,0.8,0.25,1);display:flex;flex-direction:column}
+.burger-drawer.open{right:0}
+.drawer-section{font-size:10px;color:#b4b2a9;letter-spacing:0.14em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.drawer-section:first-child{margin-top:0}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;font-size:14px;color:#2c2c2a;text-decoration:none;transition:background 0.12s}
+.drawer-item:hover{background:#f5f5f3}
+.drawer-item.active{font-weight:500}
+.drawer-item.soon{color:#b4b2a9;cursor:default}
+.drawer-item.soon:hover{background:transparent}
+.drawer-badge{font-size:9px;padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase}
+.drawer-badge.live{background:#E1F5EE;color:#0F6E56;border:0.5px solid #1D9E75}
+.drawer-badge.soon{background:#f1efe8;color:#b4b2a9;border:0.5px solid #d3d1c7}
+.drawer-footer{margin-top:auto;padding:0 24px;font-size:11px;color:#b4b2a9;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="burger-nav">
+  <button class="burger-btn" id="burgerBtn" onclick="toggleBurger()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+<div class="burger-overlay" id="burgerOverlay" onclick="toggleBurger()"></div>
+<div class="burger-drawer" id="burgerDrawer">
+  <div class="drawer-section">Navigation</div>
+  <a class="drawer-item" href="index.html">Home</a>
+  <div class="drawer-section">Tools</div>
+  <a class="drawer-item" href="ausleger_rechner_v7.html">Ausleger-Rechner <span class="drawer-badge live">Live</span></a>
+  <a class="drawer-item soon">Nutzlastrechner <span class="drawer-badge soon">Bald</span></a>
+  <a class="drawer-item soon">Achslastrechner <span class="drawer-badge soon">Bald</span></a>
+  <a class="drawer-item soon">Anschlagmittel <span class="drawer-badge soon">Bald</span></a>
+  <div class="drawer-footer">© Manuel Widmer<br>Alle Angaben ohne Gewähr</div>
+  <a href="admin.html" style="padding:10px 24px;font-size:11px;color:#b4b2a9;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s" onmouseover="this.style.color='#888780'" onmouseout="this.style.color='#b4b2a9'">Admin</a>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-label">Kran Tools</div>
+    <div class="login-title">Admin<br><em>Bereich</em></div>
+    <input class="login-input" type="password" id="pw-input" placeholder="Passwort" onkeydown="if(event.key==='Enter')login()">
+    <button class="login-btn" onclick="login()">Einloggen</button>
+    <div class="login-error" id="login-error">Falsches Passwort.</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-screen">
+  <div class="topbar">
+    <div class="topbar-title">Kran<em>Tools</em></div>
+    <span class="topbar-badge">Admin</span>
+    <div class="topbar-right">
+      <a class="topbar-link" href="index.html">← Hauptseite</a>
+      <button class="topbar-logout" onclick="logout()">Abmelden</button>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <nav class="sidebar">
+      <div class="sidebar-section">Verwaltung</div>
+      <div class="sidebar-item active" onclick="showPanel('tools', this)">
+        <div class="s-dot"></div> Tools
+      </div>
+      <div class="sidebar-section">System</div>
+      <div class="sidebar-item" onclick="showPanel('settings', this)">
+        <div class="s-dot"></div> Einstellungen
+      </div>
+    </nav>
+
+    <main class="admin-main">
+
+      <!-- TOOLS -->
+      <div class="panel active" id="panel-tools">
+        <div class="panel-header">
+          <span class="panel-title">Tools</span>
+          <span class="panel-meta" id="active-count">0 aktiv</span>
+        </div>
+        <div class="toggle-list" id="toggle-list"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="panel-settings">
+        <div class="panel-header">
+          <span class="panel-title">Einstellungen</span>
+          <span class="panel-meta">System</span>
+        </div>
+        <div class="settings-block">
+          <div class="settings-label">Passwort ändern</div>
+          <input class="settings-input" type="password" id="new-pw" placeholder="Neues Passwort">
+          <input class="settings-input" type="password" id="new-pw2" placeholder="Wiederholen">
+          <button class="settings-btn" onclick="changePassword()">Speichern</button>
+          <div class="msg" id="pw-msg"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <footer>
+    <span>© Manuel Widmer — Alle Rechte vorbehalten</span>
+    <span>Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</span>
+  </footer>
+</div>
+
+<script>
+  const ALL_TOOLS = [
+    { id: 'ausleger', name: 'Ausleger-Rechner', desc: 'Turmkran-Montage · Minimale Auslegerlänge', setup: 'ausleger_admin_v2.html' },
+  ];
+
+  function toggleBurger() {
+    document.getElementById('burgerBtn').classList.toggle('open');
+    document.getElementById('burgerOverlay').classList.toggle('open');
+    document.getElementById('burgerDrawer').classList.toggle('open');
+  }
+
+  const DEFAULT_PW = 'admin123';
+  const getPw = () => localStorage.getItem('kran_admin_pw') || DEFAULT_PW;
+
+  function getActive() {
+    try { return JSON.parse(localStorage.getItem('kran_active_tools') || '[]'); }
+    catch { return []; }
+  }
+  function setActive(arr) { localStorage.setItem('kran_active_tools', JSON.stringify(arr)); }
+
+  function login() {
+    const input = document.getElementById('pw-input');
+    if (input.value === getPw()) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-screen').style.display = 'flex';
+      input.value = '';
+      document.getElementById('login-error').style.display = 'none';
+      renderTools();
+    } else {
+      input.classList.add('error');
+      document.getElementById('login-error').style.display = 'block';
+      setTimeout(() => input.classList.remove('error'), 1200);
+    }
+  }
+
+  function logout() {
+    document.getElementById('admin-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+
+  function showPanel(id, el) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function renderTools() {
+    const active = getActive();
+    const list = document.getElementById('toggle-list');
+    list.innerHTML = ALL_TOOLS.map(t => {
+      const on = active.includes(t.id);
+      return `
+        <div class="toggle-wrap">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-name">${t.name}</div>
+              <div class="toggle-desc">${t.desc}</div>
+            </div>
+            <div class="toggle-right">
+              <span class="toggle-status ${on ? 'on' : 'off'}" id="status-${t.id}">${on ? 'Aktiv' : 'Inaktiv'}</span>
+              ${t.setup ? `<button class="setup-btn" id="setup-btn-${t.id}" onclick="toggleSetup('${t.id}','${t.setup}')">Setup</button>` : ''}
+              <label class="switch">
+                <input type="checkbox" ${on ? 'checked' : ''} onchange="toggleTool('${t.id}', this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          ${t.setup ? `<div class="setup-panel" id="setup-panel-${t.id}"></div>` : ''}
+        </div>`;
+    }).join('');
+    updateCount();
+  }
+
+  function toggleTool(id, checked) {
+    let active = getActive();
+    if (checked) { if (!active.includes(id)) active.push(id); }
+    else { active = active.filter(x => x !== id); }
+    setActive(active);
+    const s = document.getElementById('status-' + id);
+    s.textContent = checked ? 'Aktiv' : 'Inaktiv';
+    s.className = 'toggle-status ' + (checked ? 'on' : 'off');
+    updateCount();
+  }
+
+  function toggleSetup(id, src) {
+    window.location.href = src;
+  }
+
+  function updateCount() {
+    document.getElementById('active-count').textContent = getActive().length + ' aktiv';
+  }
+
+  function changePassword() {
+    const a = document.getElementById('new-pw').value;
+    const b = document.getElementById('new-pw2').value;
+    if (!a) { showMsg('Passwort darf nicht leer sein.', '#D85A30'); return; }
+    if (a !== b) { showMsg('Passwörter stimmen nicht überein.', '#D85A30'); return; }
+    localStorage.setItem('kran_admin_pw', a);
+    document.getElementById('new-pw').value = '';
+    document.getElementById('new-pw2').value = '';
+    showMsg('Passwort gespeichert.', '#0F6E56');
+  }
+
+  function showMsg(text, color) {
+    const el = document.getElementById('pw-msg');
+    el.textContent = text; el.style.color = color; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

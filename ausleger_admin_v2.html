@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – Kranmodelle</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#2c2c2a;padding:1.5rem}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font-size:20px;font-weight:600;margin-bottom:4px}
+.sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+.card{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem}
+.card-title{font-size:14px;font-weight:600;margin-bottom:1rem;color:#2c2c2a}
+.btn{padding:7px 14px;border:0.5px solid #b4b2a9;border-radius:7px;background:#fff;font-size:13px;cursor:pointer;color:#2c2c2a}
+.btn:hover{background:#f1efe8}
+.btn.primary{background:#2c2c2a;color:#fff;border-color:#2c2c2a}
+.btn.primary:hover{background:#444}
+.btn.danger{color:#D85A30;border-color:#D85A30}
+.btn.danger:hover{background:#fff5f2}
+.btn.green{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12px;font-weight:500;color:#5f5e5a}
+.field input,.field select{padding:7px 10px;font-size:13px;border:0.5px solid #d3d1c7;border-radius:7px;background:#fff}
+.field input:focus,.field select:focus{outline:none;border-color:#888}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.notice{font-size:12px;color:#5f5e5a;padding:8px 12px;background:#f1efe8;border-radius:7px;border-left:3px solid #b4b2a9;margin-bottom:12px}
+.error{color:#D85A30;font-size:12px;margin-top:4px}
+.success{color:#0F6E56;font-size:12px;background:#E1F5EE;padding:8px 12px;border-radius:7px;margin-top:8px;display:none}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:8px 10px;text-align:left;background:#f5f5f3;border-bottom:1px solid #d3d1c7;font-weight:500;font-size:12px;color:#5f5e5a;white-space:nowrap}
+td{padding:7px 10px;border-bottom:0.5px solid #eee;vertical-align:middle}
+tr:hover td{background:#fafaf8}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:500}
+.badge.stamm{background:#f1efe8;color:#5f5e5a;border:0.5px solid #d3d1c7}
+.badge.community{background:#E1F5EE;color:#0F6E56;border:0.5px solid #1D9E75}
+.badge.topless{background:#EEF2FF;color:#4B5EAA;border:0.5px solid #9BA8DC;margin-left:4px}
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.search-bar input{flex:1;padding:7px 10px;font-size:13px;border:0.5px solid #d3d1c7;border-radius:7px}
+.tabs{display:flex;gap:0;border:0.5px solid #d3d1c7;border-radius:7px;overflow:hidden;margin-bottom:1.25rem;width:fit-content}
+.tab{padding:7px 18px;font-size:13px;cursor:pointer;border:none;background:#fff;color:#5f5e5a}
+.tab.active{background:#2c2c2a;color:#fff;font-weight:500}
+.section{display:none}.section.active{display:block}
+.topless-check{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#EEF2FF;border-radius:7px;border:0.5px solid #9BA8DC;margin-bottom:10px}
+.topless-check label{font-size:13px;color:#4B5EAA;font-weight:500;cursor:pointer}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+<body>
+<div style="border-bottom:0.5px solid #d3d1c7;padding:0 20px;display:flex;align-items:center;gap:16px;height:48px;background:#fff;position:sticky;top:0;z-index:50">
+  <a href="admin.html" style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.04em;color:#2c2c2a;text-decoration:none;line-height:1">Kran<span style="color:#f0c000">Tools</span></a>
+  <span style="color:#d3d1c7;font-size:16px">·</span>
+  <span style="font-family:system-ui,sans-serif;font-size:13px;color:#888780">Admin</span>
+  <span style="color:#d3d1c7;font-size:16px">·</span>
+  <span style="font-family:system-ui,sans-serif;font-size:13px;color:#2c2c2a;font-weight:500">Kranmodelle</span>
+  <a href="admin.html" style="margin-left:auto;font-family:system-ui,sans-serif;font-size:12px;color:#888780;text-decoration:none">← Zurück zum Admin</a>
+</div>
+<div class="wrap">
+  <h1>Kranmodelle – Admin</h1>
+  <div class="sub">Verwaltung der Krandatenbank · Stammdaten + Community</div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('liste')">Kranmodelle</button>
+    <button class="tab" onclick="showTab('neu')">+ Neuer Kran</button>
+    <button class="tab" onclick="showTab('import')">↑ Excel Import</button>
+  </div>
+
+  <!-- ── LISTE ── -->
+  <div id="tab-liste" class="section active">
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Suchen…" oninput="renderTable()">
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="filterTopless" onchange="renderTable()"> Nur Topless
+      </label>
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="filterCommunity" onchange="renderTable()"> Nur Community
+      </label>
+      <span id="tableCount" style="font-size:12px;color:#888;white-space:nowrap"></span>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('name')" style="cursor:pointer;user-select:none">Modell <span id="sort_name"></span></th>
+              <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortBy('turmspitze')">Topless <span id="sort_turmspitze"></span></th>
+              <th onclick="sortBy('src')" style="cursor:pointer;user-select:none">Typ <span id="sort_src"></span></th>
+              <th onclick="sortBy('hh_ok')" style="cursor:pointer;user-select:none">HH zu OK (m) <span id="sort_hh_ok"></span></th>
+              <th onclick="sortBy('koenig')" style="cursor:pointer;user-select:none">Drehteil/Turmspitze (t) <span id="sort_koenig"></span></th>
+              <th onclick="sortBy('gal')" style="cursor:pointer;user-select:none">GAL (t) <span id="sort_gal"></span></th>
+              <th>Ausleger</th>
+              <th onclick="sortBy('addedBy')" style="cursor:pointer;user-select:none">Quelle <span id="sort_addedBy"></span></th>
+              <th onclick="sortBy('addedAt')" style="cursor:pointer;user-select:none">Erfasst am <span id="sort_addedAt"></span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NEUER KRAN ── -->
+  <div id="tab-neu" class="section">
+    <div class="card">
+      <div class="card-title">Neuer Kran erfassen</div>
+      <div class="topless-check">
+        <input type="checkbox" id="nTopless" onchange="updateToplessHint()">
+        <label for="nTopless">Topless-Kran (keine Turmspitze = Standard Abstand zum Rollenkopf des Autokrans 10m)</label>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Hersteller</label>
+          <select id="nHersteller"><option>Liebherr</option><option>Potain</option>
+          <option>Wolffkran</option><option>Condecta</option><option>Wilbert</option><option>Sonstige</option></select>
+        </div>
+        <div class="field"><label>Modellbezeichnung *</label>
+          <input type="text" id="nModell" placeholder="z.B. 280 EC-B" oninput="nValidate()">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>HH zu OK Turmdrehkran (m) *</label>
+          <input type="number" id="nHhOk" step="0.01" placeholder="z.B. 10.5" oninput="nValidate()">
+        </div>
+        <div class="field"><label>Drehteil/Turmspitze (t)</label>
+          <input type="number" id="nKoenig" step="0.01" placeholder="t">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Gegenausleger (t)</label>
+          <input type="number" id="nGal" step="0.01" placeholder="t">
+        </div>
+        <div class="field"><label>Erfasst von *</label>
+          <input type="text" id="nUser" placeholder="Name / Firma" oninput="nValidate()">
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:500;margin:10px 0 8px">Auslegergewichte (t)</div>
+      <div class="grid4">
+        <div class="field"><label>35m</label><input type="number" id="nAL35" step="0.01"></div>
+        <div class="field"><label>40m</label><input type="number" id="nAL40" step="0.01"></div>
+        <div class="field"><label>45m</label><input type="number" id="nAL45" step="0.01"></div>
+        <div class="field"><label>50m</label><input type="number" id="nAL50" step="0.01"></div>
+        <div class="field"><label>55m</label><input type="number" id="nAL55" step="0.01"></div>
+        <div class="field"><label>60m</label><input type="number" id="nAL60" step="0.01"></div>
+        <div class="field"><label>65m</label><input type="number" id="nAL65" step="0.01"></div>
+        <div class="field"><label>70m</label><input type="number" id="nAL70" step="0.01"></div>
+        <div class="field"><label>75m</label><input type="number" id="nAL75" step="0.01"></div>
+        <div class="field"><label>80m</label><input type="number" id="nAL80" step="0.01"></div>
+      </div>
+      <div class="error" id="nError"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn primary" id="nSaveBtn" onclick="nSave()" disabled>Kran speichern</button>
+        <button class="btn" onclick="nClear()">Leeren</button>
+      </div>
+      <div class="success" id="nSuccess">Kran gespeichert ✓</div>
+    </div>
+  </div>
+
+  <!-- ── IMPORT ── -->
+  <div id="tab-import" class="section">
+    <div class="card">
+      <div class="card-title">Excel Import</div>
+      <div class="notice">Vorlage herunterladen, ausfüllen (ab Zeile 5), hochladen. Pflichtfelder: <strong>name</strong> und <strong>hh_ok</strong>.</div>
+      <button class="btn green" onclick="downloadVorlage()" style="margin-bottom:14px">↓ Excel-Vorlage herunterladen (.xlsx)</button>
+      <div class="field">
+        <label>Importiert von *</label>
+        <input type="text" id="iUser" placeholder="Name / Firma">
+      </div>
+      <div class="field">
+        <label>Excel-Datei (.xlsx)</label>
+        <input type="file" id="iFile" accept=".xlsx,.xls">
+      </div>
+      <div class="error" id="iError" style="margin-bottom:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn primary" onclick="doImport()">Importieren</button>
+      </div>
+      <div class="success" id="iSuccess"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STAMMDATEN=[
+{"name":"Liebherr 100 EL","hh_ok":7.4,"koenig":4.1,"gal":3.7,"al":{40:5.6,45:6.0,50:6.2,55:6.3}},
+{"name":"Liebherr 100 LC","hh_ok":7.8,"koenig":5.3,"gal":2.7,"al":{40:4.6,45:5.0,50:5.4}},
+{"name":"Liebherr 110 EC-B","hh_ok":9.0,"koenig":6.7,"gal":3.0,"al":{40:5.8,45:6.2,50:6.45,55:6.65}},
+{"name":"Liebherr 110 EL","hh_ok":7.4,"koenig":4.6,"gal":4.2,"al":{40:5.6,45:6.0,50:6.2,55:6.4}},
+{"name":"Liebherr 112 EC-B","hh_ok":9.1,"koenig":8.3,"gal":8.6,"al":{40:7.3,45:7.8,50:8.2}},
+{"name":"Liebherr 112 EC-H","hh_ok":9.3,"koenig":8.8,"gal":6.8,"al":{40:6.8,45:7.2,50:7.6,55:8.1}},
+{"name":"Liebherr 120 HC","hh_ok":7.9,"koenig":8.0,"gal":7.2,"al":{40:6.2,45:6.65,50:7.15}},
+{"name":"Liebherr 130 EC-B","hh_ok":9.0,"koenig":7.6,"gal":3.6,"al":{40:6.7,45:7.0,50:7.4,55:7.6,60:7.81}},
+{"name":"Liebherr 132 EC-H","hh_ok":9.3,"koenig":8.8,"gal":6.8,"al":{40:6.8,45:7.2,50:7.6,55:8.1}},
+{"name":"Liebherr 132 EC-HM","hh_ok":10.3,"koenig":8.5,"gal":7.0,"al":{40:6.7,45:7.1,50:7.4,55:8.2,60:8.7}},
+{"name":"Liebherr 140 EC-H","hh_ok":10.3,"koenig":8.8,"gal":7.5,"al":{40:6.7,45:7.1,50:7.4,55:8.3,60:8.8}},
+{"name":"Liebherr 140 HC","hh_ok":8.4,"koenig":8.3,"gal":7.2,"al":{40:6.2,45:6.65,50:7.15,55:7.6}},
+{"name":"Liebherr 150 EC-B","hh_ok":10.3,"koenig":7.11,"gal":5.0,"al":{40:6.25,45:6.7,50:7.0,55:7.2,60:7.4}},
+{"name":"Liebherr 154 EC-H","hh_ok":10.3,"koenig":8.8,"gal":7.5,"al":{40:6.7,45:7.1,50:7.4,55:8.3,60:8.8}},
+{"name":"Liebherr 154 EC-HM","hh_ok":10.3,"koenig":8.5,"gal":7.0,"al":{40:6.7,45:7.1,50:7.4,55:8.3,60:8.8}},
+{"name":"Liebherr 160 EC-B","hh_ok":10.3,"koenig":7.8,"gal":7.0,"al":{40:7.2,45:7.7,50:7.8,55:8.4,60:8.7}},
+{"name":"Liebherr 180 EC-B","hh_ok":9.8,"koenig":10.1,"gal":9.7,"al":{40:9.7,45:10.4,50:10.5,55:11.2,60:11.6}},
+{"name":"Liebherr 180 EC-H","hh_ok":10.3,"koenig":10.2,"gal":8.5,"al":{40:7.6,45:8.5,50:8.5,55:9.3,60:9.7}},
+{"name":"Liebherr 185 HC","hh_ok":10.1,"koenig":8.9,"gal":10.0,"al":{40:6.7,45:7.5,50:8.0,55:8.8,60:9.6}},
+{"name":"Liebherr 200 EC-B","hh_ok":10.5,"koenig":10.5,"gal":10.3,"al":{40:10.6,45:11.0,50:11.2,55:11.9,60:12.1,65:12.8}},
+{"name":"Liebherr 200 EC-H","hh_ok":10.8,"koenig":10.2,"gal":8.5,"al":{40:7.6,45:8.5,50:8.5,55:9.3,60:9.7}},
+{"name":"Liebherr 200 EC-HM","hh_ok":10.3,"koenig":10.5,"gal":8.0,"al":{40:7.6,45:8.5,50:8.8,55:9.3,60:9.7}},
+{"name":"Liebherr 200/12 EC-H","hh_ok":10.3,"koenig":10.2,"gal":8.5,"al":{40:8.5,45:9.3,50:9.5,55:10.5,60:11.0}},
+{"name":"Liebherr 200/12 EC-HM","hh_ok":10.3,"koenig":11.5,"gal":8.2,"al":{40:8.4,45:9.2,50:9.3,55:10.0,60:10.5}},
+{"name":"Liebherr 202 EC-B","hh_ok":10.4,"koenig":9.0,"gal":10.3,"al":{40:10.6,45:11.4,50:11.6,55:12.3,60:12.4,65:13.2}},
+{"name":"Liebherr 224 EC-H","hh_ok":10.8,"koenig":11.8,"gal":13.0,"al":{40:10.1,45:11.0,50:11.5,55:13.0,60:13.5,65:14.0}},
+{"name":"Liebherr 245 EC-HM","hh_ok":10.5,"koenig":12.0,"gal":13.0,"al":{40:9.8,45:10.5,50:11.2,55:12.5,60:13.0,65:13.7}},
+{"name":"Liebherr 250 EC-B","hh_ok":10.3,"koenig":10.5,"gal":10.3,"al":{40:11.8,45:12.4,50:13.2,55:13.4,60:14.07,65:14.2,70:15.0}},
+{"name":"Liebherr 256 HC","hh_ok":11.2,"koenig":11.7,"gal":12.0,"al":{40:8.8,45:9.8,50:10.2,55:11.2,60:12.5,65:13.6,70:15.0}},
+{"name":"Liebherr 280 EC-B","hh_ok":10.5,"koenig":14.6,"gal":18.5,"al":{40:15.0,45:15.8,50:16.2,55:17.1,60:17.0,65:18.0,70:18.5}},
+{"name":"Liebherr 280 EC-H","hh_ok":11.8,"koenig":13.0,"gal":15.5,"al":{40:11.2,45:12.5,50:13.3,55:15.0,60:16.0,65:16.5,70:17.0}},
+{"name":"Liebherr 280/12 EC-H","hh_ok":11.8,"koenig":13.0,"gal":14.5,"al":{40:10.1,45:11.1,50:11.9,55:13.5,60:14.6,65:15.0,70:15.5,75:16.2}},
+{"name":"Liebherr 285 EC-B","hh_ok":10.5,"koenig":10.8,"gal":13.0,"al":{40:12.5,45:13.4,50:13.9,55:14.8,60:14.9,65:15.8,70:15.6,75:16.5}},
+{"name":"Liebherr 30 EC-B","hh_ok":8.1,"koenig":1.6,"gal":1.0,"al":{}},
+{"name":"Liebherr 40 LC","hh_ok":7.2,"koenig":4.08,"gal":1.7,"al":{40:3.0}},
+{"name":"Liebherr 45 EC","hh_ok":6.7,"koenig":6.5,"gal":0.0,"al":{40:3.1}},
+{"name":"Liebherr 63 EC-B","hh_ok":8.4,"koenig":4.5,"gal":2.3,"al":{40:4.4,45:4.8}},
+{"name":"Liebherr 63 LC","hh_ok":7.2,"koenig":4.3,"gal":1.6,"al":{40:3.55,45:3.7}},
+{"name":"Liebherr 71 EC","hh_ok":6.7,"koenig":9.0,"gal":0.0,"al":{40:4.7,45:5.0}},
+{"name":"Liebherr 71 EC-B","hh_ok":8.4,"koenig":4.5,"gal":2.3,"al":{40:4.5,45:4.7,50:5.0}},
+{"name":"Liebherr 80 EC-B","hh_ok":9.1,"koenig":7.6,"gal":7.3,"al":{40:5.7,45:6.0}},
+{"name":"Liebherr 80 EL","hh_ok":7.5,"koenig":4.1,"gal":3.7,"al":{40:5.1,45:5.4,50:5.5}},
+{"name":"Liebherr 80 HC","hh_ok":7.9,"koenig":7.0,"gal":6.7,"al":{40:5.7,45:6.25}},
+{"name":"Liebherr 80 LC","hh_ok":7.8,"koenig":6.2,"gal":2.7,"al":{40:4.0,45:4.35}},
+{"name":"Liebherr 85 EC-B","hh_ok":8.4,"koenig":4.4,"gal":2.5,"al":{40:4.65,45:5.0,50:5.2}},
+{"name":"Liebherr 90 EC","hh_ok":6.7,"koenig":9.9,"gal":0.0,"al":{40:5.2,45:5.5,50:6.3}},
+{"name":"Liebherr 90 EC-B","hh_ok":9.0,"koenig":6.7,"gal":3.0,"al":{40:5.8,45:6.2,50:6.5}},
+{"name":"Liebherr 91 EC","hh_ok":7.0,"koenig":11.0,"gal":0.0,"al":{40:5.6,45:6.0,50:6.7}},
+{"name":"Potain E 10-14C","hh_ok":null,"koenig":2.5,"gal":1.8,"al":{40:5.7,45:6.3}},
+{"name":"Potain F 15-15C","hh_ok":6.7,"koenig":4.0,"gal":1.9,"al":{40:7.0,45:7.3,50:7.5}},
+{"name":"Potain H 20-14C","hh_ok":null,"koenig":8.5,"gal":4.5,"al":{40:7.0,45:7.5,50:7.7,55:8.3,60:8.5}},
+{"name":"Potain H 30-23C","hh_ok":null,"koenig":11.5,"gal":8.3,"al":{40:8.9,45:9.7,50:10.1,55:10.5,60:10.8}},
+{"name":"Potain H 30-30C","hh_ok":null,"koenig":11.5,"gal":8.8,"al":{40:9.7,45:10.0,50:10.5,55:11.2,60:12.1}},
+{"name":"Potain MC 68","hh_ok":5.8,"koenig":2.7,"gal":0.0,"al":{40:4.4,45:4.5}},
+{"name":"Potain MC 85","hh_ok":7.4,"koenig":2.7,"gal":2.0,"al":{40:6.0,45:6.6,50:6.9}},
+{"name":"Potain MCT 50","hh_ok":9.5,"koenig":2.9,"gal":0.0,"al":{40:4.2}},
+{"name":"Potain MCT 68","hh_ok":9.6,"koenig":3.7,"gal":0.0,"al":{40:4.7,45:4.9}},
+{"name":"Potain MCT 88","hh_ok":10.3,"koenig":4.4,"gal":0.0,"al":{40:5.9,45:6.1,50:6.3}},
+{"name":"Potain MD 120","hh_ok":8.3,"koenig":4.8,"gal":3.3,"al":{40:8.2,45:8.6,50:8.8,55:9.6}},
+{"name":"Potain MD 125","hh_ok":8.3,"koenig":4.8,"gal":3.3,"al":{40:7.9,45:8.2,50:8.4,55:9.2}},
+{"name":"Potain MD 150","hh_ok":8.3,"koenig":5.3,"gal":3.6,"al":{40:10.0,45:10.3,50:10.6,55:10.6}},
+{"name":"Potain MD 170","hh_ok":8.3,"koenig":5.3,"gal":3.6,"al":{40:10.0,45:10.3,50:10.6,55:11.6}},
+{"name":"Potain MD 175","hh_ok":8.3,"koenig":5.2,"gal":3.6,"al":{40:9.8,45:10.2,50:10.4,55:11.4,60:11.6}},
+{"name":"Potain MD 185","hh_ok":10.1,"koenig":7.1,"gal":5.5,"al":{40:7.2,45:7.9,50:8.5,55:8.8,60:9.4}},
+{"name":"Potain MD 205","hh_ok":10.1,"koenig":8.5,"gal":6.7,"al":{40:7.2,45:7.9,50:8.5,55:8.8,60:9.4}},
+{"name":"Potain MD 208","hh_ok":9.3,"koenig":8.6,"gal":6.7,"al":{40:6.6,45:6.9,50:7.4,55:7.7,60:8.3}},
+{"name":"Potain MD 235","hh_ok":10.3,"koenig":10.0,"gal":8.8,"al":{40:9.0,45:9.4,50:10.1,55:10.7,60:11.0,65:11.4}},
+{"name":"Potain MD 238","hh_ok":9.4,"koenig":10.5,"gal":7.9,"al":{40:8.22,45:8.8,50:9.5,55:9.8,60:10.2,65:10.5}},
+{"name":"Potain MD 265","hh_ok":10.3,"koenig":10.0,"gal":7.6,"al":{40:10.1,45:10.6,50:10.9,55:11.8,60:12.7,65:13.0}},
+{"name":"Potain MD 285","hh_ok":10.3,"koenig":12.7,"gal":9.7,"al":{40:12.3,45:13.2,50:14.2,55:14.8,60:15.4,65:15.8,70:16.3}},
+{"name":"Potain MDT 120","hh_ok":null,"koenig":9.9,"gal":null,"al":{40:5.5,45:5.7,50:5.9,55:6.1}},
+{"name":"Potain MDT 128","hh_ok":10.2,"koenig":5.2,"gal":4.2,"al":{40:7.3,45:7.6,50:7.8,55:8.0}},
+{"name":"Potain MDT 132","hh_ok":10.6,"koenig":5.8,"gal":5.0,"al":{40:6.6,45:6.9,50:7.1,55:7.3}},
+{"name":"Potain MDT 162","hh_ok":10.9,"koenig":6.6,"gal":7.0,"al":{40:8.3,45:8.7,50:9.0,55:9.2,60:9.4}},
+{"name":"Potain MDT 178","hh_ok":10.5,"koenig":5.4,"gal":5.0,"al":{40:8.2,45:8.5,50:8.8,55:9.0,60:9.3}},
+{"name":"Potain MDT 192","hh_ok":11.3,"koenig":6.7,"gal":9.3,"al":{40:8.6,45:9.0,50:9.3,55:9.6,60:9.9}},
+{"name":"Potain MDT 218","hh_ok":10.5,"koenig":7.2,"gal":5.7,"al":{40:9.1,45:9.5,50:9.9,55:10.2,60:10.5,65:10.7}},
+{"name":"Potain MDT 218A","hh_ok":10.5,"koenig":6.6,"gal":6.0,"al":{40:9.6,45:10.0,50:10.4,55:10.7,60:11.0,65:11.2}},
+{"name":"Potain MDT 222","hh_ok":11.3,"koenig":8.1,"gal":10.4,"al":{40:9.6,45:10.2,50:10.6,55:11.0,60:11.3,65:11.5}},
+{"name":"Potain MDT 248","hh_ok":10.6,"koenig":8.5,"gal":8.3,"al":{40:9.5,45:10.2,50:10.5,55:11.0,60:11.3,65:11.6}},
+{"name":"Potain MDT 268","hh_ok":10.6,"koenig":8.5,"gal":8.5,"al":{40:10.2,45:11.1,50:11.0,55:12.0,60:12.3,65:12.6}},
+{"name":"Potain MDT 302","hh_ok":11.6,"koenig":10.8,"gal":12.9,"al":{40:13.2,45:14.1,50:14.6,55:15.5,60:15.6,65:16.1,70:16.5,75:17.0}},
+{"name":"Potain MDT 308","hh_ok":10.6,"koenig":10.1,"gal":10.0,"al":{40:12.2,45:12.3,50:13.3,55:13.1,60:14.1,65:14.5,70:14.8}},
+{"name":"Potain MDT 368","hh_ok":10.4,"koenig":11.0,"gal":14.1,"al":{40:14.7,45:15.5,50:15.7,55:15.6,60:16.6,65:17.6,70:18.0,75:18.3}},
+{"name":"Potain MDT 98","hh_ok":9.2,"koenig":5.6,"gal":0.0,"al":{40:7.1,45:7.4,50:7.7,55:7.9}},
+{"name":"Wilbert WT150","hh_ok":10.8,"koenig":6.0,"gal":9.3,"al":{40:8.3,45:9.4,50:9.9,55:10.4,60:11.0}},
+{"name":"Wilbert WT200","hh_ok":10.7,"koenig":7.89,"gal":10.63,"al":{40:9.38,45:10.6,50:11.2,55:11.8,60:12.3,65:14.2}},
+{"name":"Wilbert WT300","hh_ok":11.0,"koenig":10.6,"gal":10.5,"al":{40:11.26,50:15.6}},
+{"name":"Wilbert WT320","hh_ok":11.0,"koenig":9.3,"gal":15.5,"al":{40:11.8,45:14.0,50:14.8,55:15.25,60:15.7,65:17.8,70:18.1,75:18.5}},
+{"name":"Wilbert WT420","hh_ok":12.3,"koenig":11.93,"gal":17.8,"al":{40:14.6,45:16.9,50:17.8,55:18.7,60:21.0,65:21.55,70:22.1,75:23.2}},
+{"name":"Wilbert WT650","hh_ok":13.3,"koenig":20.7,"gal":null,"al":{}},
+{"name":"Wolff 120 SL","hh_ok":9.4,"koenig":9.5,"gal":8.0,"al":{40:6.77,45:7.65,50:8.2,55:8.75}},
+{"name":"Wolff 122 SL1","hh_ok":9.1,"koenig":6.4,"gal":8.7,"al":{40:7.3,45:7.9,50:8.45,55:9.1}},
+{"name":"Wolff 122 SL2","hh_ok":9.1,"koenig":7.1,"gal":8.7,"al":{40:7.3,45:7.9,50:8.45,55:9.1}},
+{"name":"Wolff 160 SL","hh_ok":9.4,"koenig":9.7,"gal":8.7,"al":{40:7.94,45:8.63,50:9.22,55:9.6}},
+{"name":"Wolff 192 SL","hh_ok":10.2,"koenig":8.7,"gal":9.6,"al":{40:8.4,45:9.1,50:9.4,55:10.1,60:11.0}},
+{"name":"Wolff 262 SL","hh_ok":11.2,"koenig":12.5,"gal":13.0,"al":{40:10.3,45:11.2,50:11.5,55:12.5,60:14.0,65:15.0,70:15.7}},
+{"name":"Wolff 4517 City","hh_ok":9.4,"koenig":3.1,"gal":3.0,"al":{40:6.1,45:6.5,50:6.8}},
+{"name":"Wolff 4615 SL","hh_ok":6.9,"koenig":4.9,"gal":5.8,"al":{40:5.2,45:5.6}},
+{"name":"Wolff 5015 FL","hh_ok":7.3,"koenig":5.6,"gal":5.0,"al":{40:5.8,45:6.3,50:6.7}},
+{"name":"Wolff 5520 FL","hh_ok":8.8,"koenig":6.7,"gal":7.3,"al":{40:7.4,45:8.0,50:8.3,55:8.9}},
+{"name":"Wolff 5520 FL-K","hh_ok":8.8,"koenig":5.7,"gal":7.5,"al":{40:9.2,45:9.8,50:10.0,55:10.6}},
+{"name":"Wolff 6015.8 clear","hh_ok":8.6,"koenig":7.4,"gal":8.7,"al":{40:7.2,45:7.3,50:8.0,55:8.0,60:8.7}},
+{"name":"Wolff 6017 FL","hh_ok":8.8,"koenig":7.9,"gal":7.5,"al":{40:7.5,45:8.1,50:8.3,55:8.9,60:9.7}},
+{"name":"Wolff 6023 clear","hh_ok":10.3,"koenig":9.1,"gal":13.0,"al":{40:8.6,45:8.85,50:9.6,55:9.65,60:10.4}},
+{"name":"Wolff 6028 comp.","hh_ok":null,"koenig":10.0,"gal":11.0,"al":{40:12.0,45:12.9,50:13.2,55:14.1,60:14.2}},
+{"name":"Wolff 6031 clear","hh_ok":10.3,"koenig":9.4,"gal":13.0,"al":{40:9.5,45:10.3,50:10.5,55:11.3,60:11.3,65:12.1}},
+{"name":"Wolff 6031 cross","hh_ok":null,"koenig":10.6,"gal":10.5,"al":{40:10.7,45:11.7,50:11.9,55:12.9,60:12.9,65:13.9}},
+{"name":"Wolff 62 SL","hh_ok":7.6,"koenig":4.1,"gal":3.5,"al":{40:3.75}},
+{"name":"Wolff 6522 FL","hh_ok":11.6,"koenig":10.0,"gal":8.8,"al":{40:8.8,45:9.4,50:9.8,55:10.6,60:11.2,65:11.9}},
+{"name":"Wolff 6531 FL","hh_ok":10.2,"koenig":10.56,"gal":10.4,"al":{40:10.6,45:11.6,50:11.9,55:12.9,60:12.9,65:13.9}},
+{"name":"Wolff 70 SL","hh_ok":null,"koenig":5.5,"gal":5.6,"al":{40:5.6}},
+{"name":"Wolff 7031 FL","hh_ok":11.2,"koenig":10.0,"gal":12.6,"al":{40:10.0,45:11.0,50:11.2,55:12.1,60:13.3,65:14.3,70:15.0}},
+{"name":"Wolff 71 SL","hh_ok":6.9,"koenig":4.9,"gal":5.5,"al":{40:5.2,45:5.6}},
+{"name":"Wolff 73 SL","hh_ok":null,"koenig":4.7,"gal":3.3,"al":{40:5.2,45:5.6}},
+{"name":"Wolff 7532 FL","hh_ok":10.6,"koenig":10.56,"gal":11.3,"al":{40:12.0,45:12.9,50:13.2,55:14.2,60:15.8,65:16.7,70:16.8,75:17.7}},
+{"name":"Wolff 90 SL1","hh_ok":9.4,"koenig":6.65,"gal":6.8,"al":{40:5.82,45:6.37}},
+{"name":"Wolff 90 SL2","hh_ok":9.4,"koenig":6.65,"gal":6.8,"al":{40:5.82,45:6.37}},
+{"name":"Wolff 91 SL","hh_ok":7.3,"koenig":5.7,"gal":5.3,"al":{40:5.3,45:5.9,50:6.3}},
+{"name":"Wolff 92 SL","hh_ok":8.4,"koenig":6.8,"gal":5.5,"al":{40:6.05,45:6.65,50:7.0}},
+];
+let communityKrane=[];
+function loadCommunity(){
+  try{const d=localStorage.getItem('community_krane');if(d)communityKrane=JSON.parse(d);}catch(e){}
+  renderTable();
+}
+function getDeleted(){
+  try{return JSON.parse(localStorage.getItem('deleted_krane')||'[]');}catch(e){return [];}
+}
+function allKrane(){
+  const deleted=getDeleted();
+  const stamm=STAMMDATEN.filter(k=>!deleted.includes(k.name));
+  return [...stamm,...communityKrane];
+}
+function saveCommunity(){localStorage.setItem('community_krane',JSON.stringify(communityKrane));}
+
+
+// ── Tab ─────────────────────────────────────────────────────────────────
+function showTab(t){
+  ['liste','neu','import'].forEach((n,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',n===t);
+    document.getElementById('tab-'+n).classList.toggle('active',n===t);
+  });
+  if(t==='liste') renderTable();
+}
+
+// ── Tabelle ──────────────────────────────────────────────────────────────
+let sortCol='name', sortDir=1;
+function sortBy(col){
+  if(sortCol===col) sortDir*=-1;
+  else{ sortCol=col; sortDir=1; }
+  // Update indicators
+  ['name','turmspitze','src','hh_ok','koenig','gal','addedBy','addedAt'].forEach(c=>{
+    const el=document.getElementById('sort_'+c);
+    if(el) el.textContent = c===sortCol ? (sortDir===1?'▲':'▼') : '';
+  });
+  renderTable();
+}
+function renderTable(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const onlyTopless=document.getElementById('filterTopless').checked;
+  const onlyCom=document.getElementById('filterCommunity').checked;
+  const all=allKrane();
+  const filtered=all.filter(k=>{
+    if(q && !k.name.toLowerCase().includes(q)) return false;
+    if(onlyTopless && !(k.turmspitze||k.topless)) return false;
+    if(onlyCom && !communityKrane.includes(k)) return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    let va=a[sortCol]??'', vb=b[sortCol]??'';
+    if(sortCol==='src'){va=communityKrane.includes(a)?1:0;vb=communityKrane.includes(b)?1:0;}
+    if(sortCol==='turmspitze'){va=(a.turmspitze||a.topless)?1:0;vb=(b.turmspitze||b.topless)?1:0;}
+    if(typeof va==='string') return va.localeCompare(vb,'de')*sortDir;
+    return ((va||0)-(vb||0))*sortDir;
+  });
+  document.getElementById('tableCount').textContent=
+    filtered.length+' / '+all.length+' ('+STAMMDATEN.length+' Stamm · '+communityKrane.length+' Community)';
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML=filtered.map(k=>{
+    const isCom=communityKrane.includes(k);
+    const alKeys=Object.keys(k.al||{}).map(Number).sort((a,b)=>a-b);
+    const srcBadge=isCom?'<span class="badge community">Community</span>':'<span class="badge stamm">Stammdaten</span>';
+    const toplessChk=`<input type="checkbox" ${(k.turmspitze||k.topless)?'checked':''} disabled style="width:14px;height:14px">`;
+    const delBtn=`<button class="btn danger" style="padding:3px 8px;font-size:11px"
+      onclick="deleteKran('${k.name.replace(/'/g,"\\'")}')">✕ Löschen</button>`;
+    const editBtn=`<button class="btn" style="padding:3px 8px;font-size:11px;margin-right:4px"
+      onclick="editKran('${k.name.replace(/'/g,"\\'")}')">Bearbeiten</button>`;
+    return `<tr>
+      <td><strong>${k.name}</strong></td>
+      <td style="text-align:center">${toplessChk}</td>
+      <td>${srcBadge}</td>
+      <td>${k.hh_ok??'—'}</td>
+      <td>${k.koenig??'—'}</td>
+      <td>${k.gal??'—'}</td>
+      <td style="font-size:11px;color:#888">${alKeys.map(l=>l+'m').join(', ')||'—'}</td>
+      <td style="font-size:11px;color:#888">${k.addedBy||'—'}</td>
+      <td style="font-size:11px;color:#888">${k.addedAt||'—'}</td>
+      <td style="white-space:nowrap">${editBtn}${delBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteKran(name){
+  if(!confirm('Kran "'+name+'" löschen?')) return;
+  const inCom=communityKrane.findIndex(k=>k.name===name);
+  if(inCom>=0){
+    communityKrane.splice(inCom,1);
+    saveCommunity();
+  } else {
+    let deleted=JSON.parse(localStorage.getItem('deleted_krane')||'[]');
+    if(!deleted.includes(name)) deleted.push(name);
+    localStorage.setItem('deleted_krane',JSON.stringify(deleted));
+  }
+  renderTable();
+}
+
+function editKran(name){
+  let kran=communityKrane.find(k=>k.name===name);
+  if(!kran) kran=STAMMDATEN.find(k=>k.name===name);
+  if(!kran) return;
+  showTab('neu');
+  // Split name into hersteller + modell
+  // Match against known hersteller options first
+  const herstellerOpts=['Liebherr','Potain','Wolffkran','Wilbert','Condecta'];
+  let hersteller='Sonstige', modell=name;
+  for(const h of herstellerOpts){
+    if(name.startsWith(h+' ')){
+      hersteller=h;
+      modell=name.slice(h.length+1);
+      break;
+    }
+  }
+  document.getElementById('nHersteller').value=hersteller;
+  document.getElementById('nModell').value=modell;
+  document.getElementById('nHhOk').value=kran.hh_ok||'';
+  document.getElementById('nKoenig').value=kran.koenig||'';
+  document.getElementById('nGal').value=kran.gal||'';
+  document.getElementById('nUser').value=kran.addedBy||'';
+  document.getElementById('nTopless').checked=!!(kran.turmspitze||kran.topless);
+  [35,40,45,50,55,60,65,70,75,80].forEach(l=>{
+    const el=document.getElementById('nAL'+l);
+    if(el) el.value=kran.al&&kran.al[l]?kran.al[l]:'';
+  });
+  // Delete old entry, will be replaced on save
+  communityKrane=communityKrane.filter(k=>k.name!==name);
+  nValidate();
+}
+
+function clearCommunity(){
+  const e=prompt('Alle Community-Krane löschen? "LÖSCHEN" eingeben:');
+  if(e&&e.trim()==='LÖSCHEN'){communityKrane=[];saveCommunity();renderTable();alert('Gelöscht.');}
+}
+
+// ── Formular ─────────────────────────────────────────────────────────────
+function updateToplessHint(){}
+function nValidate(){
+  const ok=document.getElementById('nModell').value.trim()&&
+           document.getElementById('nHhOk').value&&
+           document.getElementById('nUser').value.trim();
+  document.getElementById('nError').textContent='';
+  document.getElementById('nSaveBtn').disabled=!ok;
+}
+function nClear(){
+  ['nModell','nHhOk','nKoenig','nGal','nUser',
+   'nAL35','nAL40','nAL45','nAL50','nAL55','nAL60','nAL65','nAL70','nAL75','nAL80']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('nTopless').checked=false;
+  document.getElementById('nError').textContent='';
+  document.getElementById('nSuccess').style.display='none';
+  document.getElementById('nSaveBtn').disabled=true;
+}
+function nSave(){
+  const h=document.getElementById('nHersteller').value;
+  const m=document.getElementById('nModell').value.trim();
+  const fullName=h+' '+m;
+  if(allKrane().find(k=>k.name.toLowerCase()===fullName.toLowerCase())){
+    document.getElementById('nError').textContent='Modell bereits vorhanden';return;
+  }
+  const al={};
+  [35,40,45,50,55,60,65,70,75,80].forEach(l=>{
+    const v=parseFloat(document.getElementById('nAL'+l).value);
+    if(!isNaN(v)&&v>0) al[l]=v;
+  });
+  communityKrane.push({
+    name:fullName,
+    hh_ok:parseFloat(document.getElementById('nHhOk').value)||null,
+    koenig:parseFloat(document.getElementById('nKoenig').value)||null,
+    gal:parseFloat(document.getElementById('nGal').value)||null,
+    turmspitze:document.getElementById('nTopless').checked,
+    al,
+    addedBy:document.getElementById('nUser').value.trim(),
+    addedAt:new Date().toLocaleDateString('de-CH')
+  });
+  saveCommunity();
+  const s=document.getElementById('nSuccess');
+  s.style.display='block'; s.textContent='Gespeichert: '+fullName+' ✓';
+  document.getElementById('nSaveBtn').disabled=true;
+  setTimeout(()=>{nClear();showTab('liste');},1200);
+}
+
+// ── Import ────────────────────────────────────────────────────────────────
+function downloadVorlage(){
+  const b64='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';
+  const byteChars=atob(b64),byteNums=new Array(byteChars.length);
+  for(let i=0;i<byteChars.length;i++) byteNums[i]=byteChars.charCodeAt(i);
+  const blob=new Blob([new Uint8Array(byteNums)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='kran_vorlage.xlsx';document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(a.href);
+}
+function doImport(){
+  const file=document.getElementById('iFile').files[0];
+  const user=document.getElementById('iUser').value.trim();
+  const err=document.getElementById('iError');
+  if(!file){err.textContent='Bitte Datei wählen';return;}
+  if(!user){err.textContent='Name erforderlich';return;}
+  err.textContent='';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      // Zeile 4 (index 3) enthält die internen Keys (name, hh_ok, koenig...)
+      // Daten starten ab Zeile 5 (index 4)
+      // sheet_to_json mit header=1 gibt Arrays → wir nutzen die Key-Zeile als Header
+      const allRows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      // Finde Key-Zeile (enthält 'name' und 'hh_ok')
+      let headerRowIdx=allRows.findIndex(r=>r.some(c=>String(c).toLowerCase()==='name')&&
+                                            r.some(c=>String(c).toLowerCase()==='hh_ok'));
+      if(headerRowIdx<0) headerRowIdx=3; // fallback: Zeile 4
+      const headers=allRows[headerRowIdx].map(h=>String(h||'').trim().toLowerCase());
+      const rows=allRows.slice(headerRowIdx+1)
+        .filter(r=>r.some(c=>c!==''))
+        .map(r=>{
+          const obj={};
+          headers.forEach((h,i)=>{ if(h) obj[h]=r[i]!==undefined?r[i]:''; });
+          return obj;
+        });
+      // getVal: direct lookup on row (keys already match internal names)
+      function getVal(row,key){
+        if(row[key]!==undefined&&row[key]!=='') return row[key];
+        // Also check without spaces/special chars
+        for(const k of Object.keys(row)){
+          if(k.toLowerCase()===key.toLowerCase()) return row[k];
+        }
+        return null;
+      }
+      const dataRows=rows.filter(r=>{
+        const n=String(r['name']||'').trim();
+        return n && n.toLowerCase()!=='name';
+      });
+      let added=0,skipped=0,errList=[];
+      dataRows.forEach(row=>{
+        const rawName=String(getVal(row,'name')||'').trim();
+        if(!rawName){skipped++;return;}
+        // Build full name: hersteller + name (if hersteller not already in name)
+        const knownH=['Liebherr','Potain','Wolffkran','Wilbert','Condecta'];
+        let hersteller=String(getVal(row,'hersteller')||'').trim();
+        if(!hersteller||hersteller.toLowerCase()==='sonstige') hersteller='';
+        // If hersteller unknown, set to Sonstige only if name doesn't start with known one
+        const startsWithKnown=knownH.some(h=>rawName.startsWith(h));
+        let kName = rawName;
+        if(hersteller && !rawName.startsWith(hersteller)){
+          kName = hersteller+' '+rawName;
+        } else if(!hersteller && !startsWithKnown){
+          // no hersteller given, keep name as-is
+          kName = rawName;
+        }
+        if(!kName){skipped++;return;}
+        if(allKrane().find(k=>k.name.toLowerCase()===kName.toLowerCase())){
+          errList.push('"'+kName+'" vorhanden');skipped++;return;
+        }
+        const al={};
+        [35,40,45,50,55,60,65,70,75,80].forEach(l=>{
+          const w=parseFloat(getVal(row,'al'+l));
+          if(!isNaN(w)&&w>0) al[l]=w;
+        });
+        const toplessVal=getVal(row,'turmspitze')||getVal(row,'topless');
+        const isTopless=toplessVal===true||String(toplessVal).toLowerCase()==='ja'||toplessVal===1;
+        communityKrane.push({
+          name:kName,hh_ok:parseFloat(getVal(row,'hh_ok'))||null,
+          koenig:parseFloat(getVal(row,'koenig'))||null,
+          gal:parseFloat(getVal(row,'gal'))||null,
+          turmspitze:isTopless,al,addedBy:user,
+          addedAt:new Date().toLocaleDateString('de-CH')
+        });
+        added++;
+      });
+      saveCommunity();renderTable();
+      const msg=document.getElementById('iSuccess');
+      msg.style.display='block';
+      msg.textContent=added+' Krane importiert'+(skipped?' · '+skipped+' übersprungen':'')+
+        (errList.length?' · '+errList.slice(0,2).join(', '):'');
+    }catch(ex){err.textContent='Fehler: '+ex.message;}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+loadCommunity();
+</script>
+</body>
+</html>

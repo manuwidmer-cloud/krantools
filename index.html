@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kran Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── BURGER MENU ── */
+.burger-nav {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 200;
+}
+
+.burger-btn {
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border: 0.5px solid #d3d1c7;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.burger-btn:hover { background: #f1efe8; }
+
+.burger-btn span {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: #2c2c2a;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.burger-btn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.burger-btn.open span:nth-child(2) { opacity: 0; }
+.burger-btn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+.burger-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(44,44,42,0.18);
+  z-index: 190;
+  backdrop-filter: blur(2px);
+}
+
+.burger-overlay.open { display: block; }
+
+.burger-drawer {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 260px;
+  height: 100%;
+  background: #fff;
+  border-left: 0.5px solid #d3d1c7;
+  z-index: 195;
+  padding: 64px 0 32px;
+  transition: right 0.25s cubic-bezier(0.25,0.8,0.25,1);
+  display: flex;
+  flex-direction: column;
+}
+
+.burger-drawer.open { right: 0; }
+
+.drawer-section {
+  font-size: 10px;
+  color: #b4b2a9;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 24px;
+  margin-bottom: 6px;
+  margin-top: 20px;
+}
+
+.drawer-section:first-child { margin-top: 0; }
+
+.drawer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 24px;
+  font-size: 14px;
+  color: #2c2c2a;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.drawer-item:hover { background: #f5f5f3; }
+.drawer-item.active { color: #2c2c2a; font-weight: 500; }
+.drawer-item.soon { color: #b4b2a9; cursor: default; }
+.drawer-item.soon:hover { background: transparent; }
+
+.drawer-badge {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 100px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.drawer-badge.live { background: #E1F5EE; color: #0F6E56; border: 0.5px solid #1D9E75; }
+.drawer-badge.soon { background: #f1efe8; color: #b4b2a9; border: 0.5px solid #d3d1c7; }
+
+.drawer-footer {
+  margin-top: auto;
+  padding: 0 24px;
+  font-size: 11px;
+  color: #b4b2a9;
+  line-height: 1.6;
+}
+
+body {
+  background: #f5f5f3;
+  color: #2c2c2a;
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 48px 60px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 12vw, 120px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: #2c2c2a;
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+h1 em { color: #f0c000; font-style: normal; }
+
+.rule {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  height: 0.5px;
+  background: #d3d1c7;
+}
+
+.tools-section {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 40px 48px 80px;
+}
+
+.tools-label {
+  font-size: 11px;
+  color: #b4b2a9;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.tool-list { display: flex; flex-direction: column; gap: 0.5px; }
+
+.tool-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  background: #fff;
+  border-radius: 8px;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+  border: 0.5px solid #d3d1c7;
+  transition: background 0.15s;
+  margin-bottom: 6px;
+}
+
+.tool-row:hover { background: #f1efe8; }
+
+.tool-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2c2c2a;
+}
+
+.tool-desc {
+  font-size: 12px;
+  color: #888780;
+  margin-top: 2px;
+}
+
+.tool-arrow {
+  font-size: 16px;
+  color: #d3d1c7;
+  transition: color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.tool-row:hover .tool-arrow { color: #2c2c2a; transform: translate(2px, -2px); }
+
+.empty-state {
+  border: 0.5px dashed #d3d1c7;
+  border-radius: 8px;
+  padding: 48px 32px;
+  text-align: center;
+  background: #fff;
+}
+
+.empty-state p { font-size: 13px; color: #b4b2a9; }
+
+footer {
+  border-top: 0.5px solid #d3d1c7;
+  padding: 20px 48px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-top { display: flex; justify-content: space-between; align-items: center; }
+
+footer span {
+  font-size: 11px;
+  color: #b4b2a9;
+  letter-spacing: 0.06em;
+}
+
+.footer-disclaimer {
+  font-size: 11px;
+  color: #b4b2a9;
+  line-height: 1.7;
+}
+
+.dot { width: 4px; height: 4px; border-radius: 50%; background: #d3d1c7; }
+</style>
+</head>
+<body>
+
+<!-- BURGER -->
+<div class="burger-nav">
+  <button class="burger-btn" id="burgerBtn" onclick="toggleBurger()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+<div class="burger-overlay" id="burgerOverlay" onclick="toggleBurger()"></div>
+<div class="burger-drawer" id="burgerDrawer">
+  <div class="drawer-section">Navigation</div>
+  <a class="drawer-item active" href="index.html">Home</a>
+  <div class="drawer-section">Tools</div>
+  <a class="drawer-item" href="ausleger_rechner_v7.html">
+    Ausleger-Rechner <span class="drawer-badge live">Live</span>
+  </a>
+  <a class="drawer-item soon">
+    Nutzlastrechner <span class="drawer-badge soon">Bald</span>
+  </a>
+  <a class="drawer-item soon">
+    Achslastrechner <span class="drawer-badge soon">Bald</span>
+  </a>
+  <a class="drawer-item soon">
+    Anschlagmittel <span class="drawer-badge soon">Bald</span>
+  </a>
+  <div class="drawer-footer">© Manuel Widmer<br>Alle Angaben ohne Gewähr</div>
+  <a href="admin.html" style="padding:10px 24px;font-size:11px;color:#b4b2a9;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s" onmouseover="this.style.color='#888780'" onmouseout="this.style.color='#b4b2a9'">Admin</a>
+</div>
+
+<section class="hero">
+  <h1>Kran<br><em>Tools</em></h1>
+</section>
+
+<div class="rule"></div>
+
+<section class="tools-section">
+  <div class="tools-label" id="tools-label">Tools — 0 verfügbar</div>
+  <div id="tool-list"></div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <span>© Manuel Widmer — Alle Rechte vorbehalten</span>
+    <div class="dot"></div>
+    <span>Kran Tools</span>
+  </div>
+  <p class="footer-disclaimer">Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</p>
+</footer>
+
+<script>
+  const ALL_TOOLS = [
+    { id: 'ausleger', name: 'Ausleger-Rechner', desc: 'Turmkran-Montage · Minimale Auslegerlänge', file: 'ausleger_rechner_v7.html' },
+  ];
+
+  function getActive() {
+    try { return JSON.parse(localStorage.getItem('kran_active_tools') || '[]'); }
+    catch { return []; }
+  }
+
+  function render() {
+    const active = getActive();
+    const visible = ALL_TOOLS.filter(t => active.includes(t.id));
+    const list = document.getElementById('tool-list');
+    document.getElementById('tools-label').textContent = `Tools — ${visible.length} verfügbar`;
+
+    if (!visible.length) {
+      list.innerHTML = '<div class="empty-state"><p>Noch keine Tools aktiv.</p></div>';
+      return;
+    }
+
+    list.innerHTML = '<div class="tool-list">' +
+      visible.map(t => `
+        <a class="tool-row" href="${t.file}">
+          <div>
+            <div class="tool-name">${t.name}</div>
+            <div class="tool-desc">${t.desc}</div>
+          </div>
+          <span class="tool-arrow">↗</span>
+        </a>
+      `).join('') +
+    '</div>';
+  }
+
+  render();
+
+  function toggleBurger() {
+    document.getElementById('burgerBtn').classList.toggle('open');
+    document.getElementById('burgerOverlay').classList.toggle('open');
+    document.getElementById('burgerDrawer').classList.toggle('open');
+  }
+</script>
+</body>
+</html>

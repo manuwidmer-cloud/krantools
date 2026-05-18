@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ausleger-Rechner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#2c2c2a;padding:1rem}
+.app{max-width:680px;margin:0 auto;padding:1rem 0}
+.header{margin-bottom:1.5rem}
+.header h1{font-size:18px;font-weight:500;margin-bottom:4px}
+.header p{font-size:13px;color:#5f5e5a}
+.tabs{display:flex;border:0.5px solid #d3d1c7;border-radius:8px;overflow:hidden;margin-bottom:1.5rem;width:fit-content}
+.tab{padding:6px 16px;font-size:13px;cursor:pointer;border:none;background:transparent;color:#5f5e5a}
+.tab.active{background:#e8e7e3;color:#2c2c2a;font-weight:500}
+.tab:hover:not(.active){background:#eeedea}
+.section{display:none}.section.active{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:#5f5e5a;font-weight:500}
+.field input,.field select{width:100%;padding:8px 10px;font-size:14px;border:0.5px solid #d3d1c7;border-radius:8px;background:#fff;color:#2c2c2a}
+.field input:focus,.field select:focus{outline:none;border-color:#888780}
+.field .unit{font-size:11px;color:#b4b2a9;margin-top:2px}
+.adv-toggle{font-size:12px;color:#5f5e5a;cursor:pointer;display:flex;align-items:center;gap:5px;padding:6px 0;user-select:none;width:fit-content;margin-bottom:6px}
+.adv-toggle:hover{color:#2c2c2a}
+.adv-panel{display:none;background:#f1efe8;border-radius:8px;padding:12px;margin-bottom:12px}
+.adv-panel.open{display:block}
+.adv-panel .field label{font-size:11px}
+.adv-panel .field input{font-size:13px;padding:6px 9px}
+.result-box{background:#f1efe8;border-radius:12px;padding:1.25rem;margin-top:1.25rem;border:0.5px solid #d3d1c7}
+.result-main{font-size:36px;font-weight:500}
+.result-label{font-size:14px;font-weight:500;color:#2c2c2a;margin-bottom:6px}
+.result-sub{font-size:13px;color:#5f5e5a;margin-top:8px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.metric{background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;padding:10px 12px}
+.metric-val{font-size:18px;font-weight:500}
+.metric-lbl{font-size:11px;color:#5f5e5a;margin-top:2px}
+.svg-wrap{margin-top:1.25rem;background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1rem;overflow:hidden}
+.btn{padding:8px 16px;border:0.5px solid #b4b2a9;border-radius:8px;background:transparent;color:#2c2c2a;font-size:13px;cursor:pointer}
+.btn:hover{background:#f1efe8}
+.btn.primary{background:#f1efe8;font-weight:500}
+.btn-row{display:flex;gap:8px;margin-top:1rem}
+.notice{font-size:12px;color:#5f5e5a;padding:10px 12px;background:#f1efe8;border-radius:8px;border-left:3px solid #b4b2a9;margin-bottom:12px}
+.kran-list{display:flex;flex-direction:column;gap:8px;margin-top:1rem;max-height:320px;overflow-y:auto}
+.kran-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:0.5px solid #d3d1c7;border-radius:8px;background:#fff;font-size:13px}
+.kran-item.community{border-left:3px solid #1D9E75}
+.kran-item .name{font-weight:500}
+.kran-item .meta{font-size:11px;color:#5f5e5a;margin-top:2px}
+.badge{font-size:10px;padding:2px 8px;border-radius:100px;background:#f1efe8;color:#5f5e5a;border:0.5px solid #d3d1c7}
+.badge.community{background:#E1F5EE;color:#0F6E56}
+.form-section{border:0.5px solid #d3d1c7;border-radius:12px;padding:1.25rem;margin-top:1rem}
+.form-section h3{font-size:14px;font-weight:500;margin-bottom:1rem}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:12px;background:#f1efe8;border-radius:8px;margin-top:12px}
+.checkbox-row input[type=checkbox]{margin-top:2px}
+.checkbox-row label{font-size:12px;color:#5f5e5a;line-height:1.5}
+.error{color:#D85A30;font-size:12px;margin-top:4px}
+.success-msg{padding:12px;background:#E1F5EE;border-radius:8px;color:#0F6E56;font-size:13px;margin-top:12px;display:none}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@media print {
+  @page { margin: 15mm; size: A4 portrait; }
+  body > * { display: none !important; }
+  #pdfView { display: block !important; font-family: system-ui, sans-serif;
+    color: #2c2c2a; background: #fff; }
+  #pdfView * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+.burger-nav{position:fixed;top:6px;right:14px;z-index:1000}
+.burger-btn{width:38px;height:38px;background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0;transition:background 0.15s}
+.burger-btn:hover{background:#f1efe8}
+.burger-btn span{display:block;width:15px;height:1.5px;background:#2c2c2a;border-radius:2px;transition:all 0.2s}
+.burger-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger-btn.open span:nth-child(2){opacity:0}
+.burger-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger-overlay{display:none;position:fixed;inset:0;background:rgba(44,44,42,0.18);z-index:990;backdrop-filter:blur(2px)}
+.burger-overlay.open{display:block}
+.burger-drawer{position:fixed;top:0;right:-280px;width:260px;height:100%;background:#fff;border-left:0.5px solid #d3d1c7;z-index:995;padding:64px 0 32px;transition:right 0.25s cubic-bezier(0.25,0.8,0.25,1);display:flex;flex-direction:column}
+.burger-drawer.open{right:0}
+.drawer-section{font-size:10px;color:#b4b2a9;letter-spacing:0.14em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.drawer-section:first-child{margin-top:0}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;font-size:14px;color:#2c2c2a;text-decoration:none;transition:background 0.12s}
+.drawer-item:hover{background:#f5f5f3}
+.drawer-item.active{font-weight:500}
+.drawer-item.soon{color:#b4b2a9;cursor:default}
+.drawer-item.soon:hover{background:transparent}
+.drawer-badge{font-size:9px;padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase}
+.drawer-badge.live{background:#E1F5EE;color:#0F6E56;border:0.5px solid #1D9E75}
+.drawer-badge.soon{background:#f1efe8;color:#b4b2a9;border:0.5px solid #d3d1c7}
+.drawer-footer{margin-top:auto;padding:0 24px;font-size:11px;color:#b4b2a9;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="burger-nav">
+  <button class="burger-btn" id="burgerBtn" onclick="toggleBurger()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+<div class="burger-overlay" id="burgerOverlay" onclick="toggleBurger()"></div>
+<div class="burger-drawer" id="burgerDrawer">
+  <div class="drawer-section">Navigation</div>
+  <a class="drawer-item" href="index.html">Home</a>
+  <div class="drawer-section">Tools</div>
+  <a class="drawer-item active" href="ausleger_rechner_v7.html">Ausleger-Rechner <span class="drawer-badge live">Live</span></a>
+  <a class="drawer-item soon">Nutzlastrechner <span class="drawer-badge soon">Bald</span></a>
+  <a class="drawer-item soon">Achslastrechner <span class="drawer-badge soon">Bald</span></a>
+  <a class="drawer-item soon">Anschlagmittel <span class="drawer-badge soon">Bald</span></a>
+  <div class="drawer-footer">© Manuel Widmer<br>Alle Angaben ohne Gewähr</div>
+  <a href="admin.html" style="padding:10px 24px;font-size:11px;color:#b4b2a9;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s" onmouseover="this.style.color='#888780'" onmouseout="this.style.color='#b4b2a9'">Admin</a>
+</div>
+<script>function toggleBurger(){document.getElementById('burgerBtn').classList.toggle('open');document.getElementById('burgerOverlay').classList.toggle('open');document.getElementById('burgerDrawer').classList.toggle('open');}</script>
+<div style="border-bottom:0.5px solid #d3d1c7;padding:0 20px;display:flex;align-items:center;gap:16px;height:48px;background:#fff;position:sticky;top:0;z-index:50">
+  <a href="index.html" style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.04em;color:#2c2c2a;text-decoration:none;line-height:1">Kran<span style="color:#f0c000">Tools</span></a>
+  <span style="color:#d3d1c7;font-size:16px">·</span>
+  <span style="font-family:system-ui,sans-serif;font-size:13px;color:#888780">Ausleger-Rechner</span>
+</div>
+<div id="view-rechner"><div class="app">
+  <div class="header">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0">
+    <h1>Berechnung minimale Auslegerlänge für Turmkran-Montagen</h1>
+    <button id="printBtn" onclick="printPDF()" class="btn"
+      style="padding:7px 14px;white-space:nowrap;display:flex;align-items:center;gap:6px">
+      ↓ PDF
+    </button>
+  </div>
+    
+  </div>
+
+
+  <div id="tab-rechner">
+    <div class="grid2">
+      <div class="field" style="grid-column:1/-1">
+        <label>Turmdrehkran wählen</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="kranSelect" onchange="onKranChange()" style="flex:1"></select>
+          <button class="btn" onclick="openKranModal()" style="padding:8px 12px;white-space:nowrap">+ Kran</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Hakenhöhe Turmdrehkran (m)</label>
+        <input type="number" id="hakenh" value="45" step="0.5" oninput="berechne()">
+        <span class="unit">ab Grund</span>
+      </div>
+      <div class="field">
+        <label>OK Turmdrehkran zu RK Autokran (m)</label>
+        <input type="number" id="rollenkopf" value="5" step="0.5" oninput="this.dataset.userModified='1';berechne()">
+        <span class="unit">Abstand von Oberkante Turmdrehkran zu Rollenkopf des Autokrans</span>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Ausladung zu Turmdrehkran (m)</label>
+        <input type="number" id="ausladung" value="20" step="0.5" oninput="berechne()">
+        <span class="unit">Horizontaler Abstand m</span>
+      </div>
+      <div class="field">
+        <label>Niveauunterschied Turmdrehkran zu Autokran (m)</label>
+        <input type="number" id="niveau" value="0" step="0.5" oninput="berechne()">
+        <span class="unit">Turmdrehkran tiefer als Autokran = negativ</span>
+      </div>
+    </div>
+    <div class="adv-toggle" onclick="toggleAdv()">
+      &#9881; Erweiterte Einstellungen <span id="advChev">&#9660;</span>
+    </div>
+    <div class="adv-panel" id="advPanel">
+      <div class="grid2">
+        <div class="field">
+          <label>Höhe Anlenkpunkt Autokran Ausleger (m)</label>
+          <input type="number" id="kranhoehe" value="3" step="0.1" oninput="berechne()">
+          <span class="unit">Standard 3 m</span>
+        </div>
+        <div class="field">
+          <label>Distanz Anlenkpunkt Ausleger ab Drehpunkt (m)</label>
+          <input type="number" id="abweichung" value="1" step="0.1" oninput="berechne()">
+          <span class="unit">Standard 1 m</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="gewichtBox" style="display:none;margin-top:1rem;border:0.5px solid #d3d1c7;border-radius:10px;overflow:hidden">
+      <div style="font-size:14px;font-weight:500;color:#2c2c2a;padding:10px 14px;border-bottom:0.5px solid #d3d1c7;background:#f1efe8">Komponentengewichte</div>
+      <table id="gewichtTable" style="width:100%;border-collapse:collapse;font-size:13px;background:#fff"></table>
+    </div>
+
+    <div class="result-box" style="padding:0;overflow:hidden">
+      <div style="padding:1.25rem 1.25rem 1rem">
+        <div class="result-label">Berechnete Minimale Auslegerlänge des Autokrans</div>
+        <div class="result-main" id="resAusleger">—</div>
+        <div class="result-sub" id="resSub">Bitte Kranmodell wählen</div>
+        <div id="kranInfo" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid #d3d1c7">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:13px;align-items:start">
+            <div>
+              <div style="font-size:11px;color:#5f5e5a;margin-bottom:2px">Kranmodell</div>
+              <div id="infoName" style="font-weight:500"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#5f5e5a;margin-bottom:2px">Hakenhöhe</div>
+              <div id="infoHH" style="font-weight:500"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#5f5e5a;margin-bottom:2px">Drehteil/Turmspitze</div>
+              <div id="infoDT" style="font-weight:500"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#5f5e5a;margin-bottom:2px">Topless-Kran</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="checkbox" id="infoTopless" disabled style="width:15px;height:15px">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div style="border-top:0.5px solid #d3d1c7;background:#fff;padding:1rem">
+        <svg id="schema" viewBox="0 0 460 520" width="100%" style="display:block">
+          <defs>
+            <marker id="arr"  markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#555"/></marker>
+            <marker id="arrS" markerWidth="5" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse"><path d="M0,0 L5,2.5 L0,5 Z" fill="#555"/></marker>
+            <marker id="arrR"  markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#E24B4A"/></marker>
+            <marker id="arrRS" markerWidth="5" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse"><path d="M0,0 L5,2.5 L0,5 Z" fill="#E24B4A"/></marker>
+          </defs>
+          <text id="svg-ph" x="230" y="260" text-anchor="middle" fill="#B4B2A9" font-size="13" font-family="system-ui,sans-serif">Bitte Kranmodell wählen und Werte eingeben</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  </div></div>
+
+
+<script>
+function openModal(id){
+  document.getElementById('modalOverlay').style.display='block';
+  document.getElementById(id).style.display='block';
+}
+function closeAllModals(){
+  document.getElementById('modalOverlay').style.display='none';
+  ['modalImport','modalManuell'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  var s=document.getElementById('csvSuccess');
+  if(s) s.style.display='none';
+}
+const STAMMDATEN=[
+{"name":"Liebherr 100 EL","hh_ok":7.4,"koenig":4.1,"gal":3.7,"al":{40:5.6,45:6.0,50:6.2,55:6.3}},
+{"name":"Liebherr 100 LC","hh_ok":7.8,"koenig":5.3,"gal":2.7,"al":{40:4.6,45:5.0,50:5.4}},
+{"name":"Liebherr 110 EC-B","hh_ok":9.0,"koenig":6.7,"gal":3.0,"al":{40:5.8,45:6.2,50:6.45,55:6.65}},
+{"name":"Liebherr 110 EL","hh_ok":7.4,"koenig":4.6,"gal":4.2,"al":{40:5.6,45:6.0,50:6.2,55:6.4}},
+{"name":"Liebherr 112 EC-B","hh_ok":9.1,"koenig":8.3,"gal":8.6,"al":{40:7.3,45:7.8,50:8.2}},
+{"name":"Liebherr 112 EC-H","hh_ok":9.3,"koenig":8.8,"gal":6.8,"al":{40:6.8,45:7.2,50:7.6,55:8.1}},
+{"name":"Liebherr 120 HC","hh_ok":7.9,"koenig":8.0,"gal":7.2,"al":{40:6.2,45:6.65,50:7.15}},
+{"name":"Liebherr 130 EC-B","hh_ok":9.0,"koenig":7.6,"gal":3.6,"al":{40:6.7,45:7.0,50:7.4,55:7.6,60:7.81}},
+{"name":"Liebherr 132 EC-H","hh_ok":9.3,"koenig":8.8,"gal":6.8,"al":{40:6.8,45:7.2,50:7.6,55:8.1}},
+{"name":"Liebherr 132 EC-HM","hh_ok":10.3,"koenig":8.5,"gal":7.0,"al":{40:6.7,45:7.1,50:7.4,55:8.2,60:8.7}},
+{"name":"Liebherr 140 EC-H","hh_ok":10.3,"koenig":8.8,"gal":7.5,"al":{40:6.7,45:7.1,50:7.4,55:8.3,60:8.8}},
+{"name":"Liebherr 140 HC","hh_ok":8.4,"koenig":8.3,"gal":7.2,"al":{40:6.2,45:6.65,50:7.15,55:7.6}},
+{"name":"Liebherr 150 EC-B","hh_ok":10.3,"koenig":7.11,"gal":5.0,"al":{40:6.25,45:6.7,50:7.0,55:7.2,60:7.4}},
+{"name":"Liebherr 154 EC-H","hh_ok":10.3,"koenig":8.8,"gal":7.5,"al":{40:6.7,45:7.1,50:7.4,55:8.3,60:8.8}},
+{"name":"Liebherr 154 EC-HM","hh_ok":10.3,"koenig":8.5,"gal":7.0,"al":{40:6.7,45:7.1,50:7.4,55:8.3,60:8.8}},
+{"name":"Liebherr 160 EC-B","hh_ok":10.3,"koenig":7.8,"gal":7.0,"al":{40:7.2,45:7.7,50:7.8,55:8.4,60:8.7}},
+{"name":"Liebherr 180 EC-B","hh_ok":9.8,"koenig":10.1,"gal":9.7,"al":{40:9.7,45:10.4,50:10.5,55:11.2,60:11.6}},
+{"name":"Liebherr 180 EC-H","hh_ok":10.3,"koenig":10.2,"gal":8.5,"al":{40:7.6,45:8.5,50:8.5,55:9.3,60:9.7}},
+{"name":"Liebherr 185 HC","hh_ok":10.1,"koenig":8.9,"gal":10.0,"al":{40:6.7,45:7.5,50:8.0,55:8.8,60:9.6}},
+{"name":"Liebherr 200 EC-B","hh_ok":10.5,"koenig":10.5,"gal":10.3,"al":{40:10.6,45:11.0,50:11.2,55:11.9,60:12.1,65:12.8}},
+{"name":"Liebherr 200 EC-H","hh_ok":10.8,"koenig":10.2,"gal":8.5,"al":{40:7.6,45:8.5,50:8.5,55:9.3,60:9.7}},
+{"name":"Liebherr 200 EC-HM","hh_ok":10.3,"koenig":10.5,"gal":8.0,"al":{40:7.6,45:8.5,50:8.8,55:9.3,60:9.7}},
+{"name":"Liebherr 200/12 EC-H","hh_ok":10.3,"koenig":10.2,"gal":8.5,"al":{40:8.5,45:9.3,50:9.5,55:10.5,60:11.0}},
+{"name":"Liebherr 200/12 EC-HM","hh_ok":10.3,"koenig":11.5,"gal":8.2,"al":{40:8.4,45:9.2,50:9.3,55:10.0,60:10.5}},
+{"name":"Liebherr 202 EC-B","hh_ok":10.4,"koenig":9.0,"gal":10.3,"al":{40:10.6,45:11.4,50:11.6,55:12.3,60:12.4,65:13.2}},
+{"name":"Liebherr 224 EC-H","hh_ok":10.8,"koenig":11.8,"gal":13.0,"al":{40:10.1,45:11.0,50:11.5,55:13.0,60:13.5,65:14.0}},
+{"name":"Liebherr 245 EC-HM","hh_ok":10.5,"koenig":12.0,"gal":13.0,"al":{40:9.8,45:10.5,50:11.2,55:12.5,60:13.0,65:13.7}},
+{"name":"Liebherr 250 EC-B","hh_ok":10.3,"koenig":10.5,"gal":10.3,"al":{40:11.8,45:12.4,50:13.2,55:13.4,60:14.07,65:14.2,70:15.0}},
+{"name":"Liebherr 256 HC","hh_ok":11.2,"koenig":11.7,"gal":12.0,"al":{40:8.8,45:9.8,50:10.2,55:11.2,60:12.5,65:13.6,70:15.0}},
+{"name":"Liebherr 280 EC-B","hh_ok":10.5,"koenig":14.6,"gal":18.5,"al":{40:15.0,45:15.8,50:16.2,55:17.1,60:17.0,65:18.0,70:18.5}},
+{"name":"Liebherr 280 EC-H","hh_ok":11.8,"koenig":13.0,"gal":15.5,"al":{40:11.2,45:12.5,50:13.3,55:15.0,60:16.0,65:16.5,70:17.0}},
+{"name":"Liebherr 280/12 EC-H","hh_ok":11.8,"koenig":13.0,"gal":14.5,"al":{40:10.1,45:11.1,50:11.9,55:13.5,60:14.6,65:15.0,70:15.5,75:16.2}},
+{"name":"Liebherr 285 EC-B","hh_ok":10.5,"koenig":10.8,"gal":13.0,"al":{40:12.5,45:13.4,50:13.9,55:14.8,60:14.9,65:15.8,70:15.6,75:16.5}},
+{"name":"Liebherr 30 EC-B","hh_ok":8.1,"koenig":1.6,"gal":1.0,"al":{}},
+{"name":"Liebherr 40 LC","hh_ok":7.2,"koenig":4.08,"gal":1.7,"al":{40:3.0}},
+{"name":"Liebherr 45 EC","hh_ok":6.7,"koenig":6.5,"gal":0.0,"al":{40:3.1}},
+{"name":"Liebherr 63 EC-B","hh_ok":8.4,"koenig":4.5,"gal":2.3,"al":{40:4.4,45:4.8}},
+{"name":"Liebherr 63 LC","hh_ok":7.2,"koenig":4.3,"gal":1.6,"al":{40:3.55,45:3.7}},
+{"name":"Liebherr 71 EC","hh_ok":6.7,"koenig":9.0,"gal":0.0,"al":{40:4.7,45:5.0}},
+{"name":"Liebherr 71 EC-B","hh_ok":8.4,"koenig":4.5,"gal":2.3,"al":{40:4.5,45:4.7,50:5.0}},
+{"name":"Liebherr 80 EC-B","hh_ok":9.1,"koenig":7.6,"gal":7.3,"al":{40:5.7,45:6.0}},
+{"name":"Liebherr 80 EL","hh_ok":7.5,"koenig":4.1,"gal":3.7,"al":{40:5.1,45:5.4,50:5.5}},
+{"name":"Liebherr 80 HC","hh_ok":7.9,"koenig":7.0,"gal":6.7,"al":{40:5.7,45:6.25}},
+{"name":"Liebherr 80 LC","hh_ok":7.8,"koenig":6.2,"gal":2.7,"al":{40:4.0,45:4.35}},
+{"name":"Liebherr 85 EC-B","hh_ok":8.4,"koenig":4.4,"gal":2.5,"al":{40:4.65,45:5.0,50:5.2}},
+{"name":"Liebherr 90 EC","hh_ok":6.7,"koenig":9.9,"gal":0.0,"al":{40:5.2,45:5.5,50:6.3}},
+{"name":"Liebherr 90 EC-B","hh_ok":9.0,"koenig":6.7,"gal":3.0,"al":{40:5.8,45:6.2,50:6.5}},
+{"name":"Liebherr 91 EC","hh_ok":7.0,"koenig":11.0,"gal":0.0,"al":{40:5.6,45:6.0,50:6.7}},
+{"name":"Potain E 10-14C","hh_ok":null,"koenig":2.5,"gal":1.8,"al":{40:5.7,45:6.3}},
+{"name":"Potain F 15-15C","hh_ok":6.7,"koenig":4.0,"gal":1.9,"al":{40:7.0,45:7.3,50:7.5}},
+{"name":"Potain H 20-14C","hh_ok":null,"koenig":8.5,"gal":4.5,"al":{40:7.0,45:7.5,50:7.7,55:8.3,60:8.5}},
+{"name":"Potain H 30-23C","hh_ok":null,"koenig":11.5,"gal":8.3,"al":{40:8.9,45:9.7,50:10.1,55:10.5,60:10.8}},
+{"name":"Potain H 30-30C","hh_ok":null,"koenig":11.5,"gal":8.8,"al":{40:9.7,45:10.0,50:10.5,55:11.2,60:12.1}},
+{"name":"Potain MC 68","hh_ok":5.8,"koenig":2.7,"gal":0.0,"al":{40:4.4,45:4.5}},
+{"name":"Potain MC 85","hh_ok":7.4,"koenig":2.7,"gal":2.0,"al":{40:6.0,45:6.6,50:6.9}},
+{"name":"Potain MCT 50","hh_ok":9.5,"koenig":2.9,"gal":0.0,"al":{40:4.2}},
+{"name":"Potain MCT 68","hh_ok":9.6,"koenig":3.7,"gal":0.0,"al":{40:4.7,45:4.9}},
+{"name":"Potain MCT 88","hh_ok":10.3,"koenig":4.4,"gal":0.0,"al":{40:5.9,45:6.1,50:6.3}},
+{"name":"Potain MD 120","hh_ok":8.3,"koenig":4.8,"gal":3.3,"al":{40:8.2,45:8.6,50:8.8,55:9.6}},
+{"name":"Potain MD 125","hh_ok":8.3,"koenig":4.8,"gal":3.3,"al":{40:7.9,45:8.2,50:8.4,55:9.2}},
+{"name":"Potain MD 150","hh_ok":8.3,"koenig":5.3,"gal":3.6,"al":{40:10.0,45:10.3,50:10.6,55:10.6}},
+{"name":"Potain MD 170","hh_ok":8.3,"koenig":5.3,"gal":3.6,"al":{40:10.0,45:10.3,50:10.6,55:11.6}},
+{"name":"Potain MD 175","hh_ok":8.3,"koenig":5.2,"gal":3.6,"al":{40:9.8,45:10.2,50:10.4,55:11.4,60:11.6}},
+{"name":"Potain MD 185","hh_ok":10.1,"koenig":7.1,"gal":5.5,"al":{40:7.2,45:7.9,50:8.5,55:8.8,60:9.4}},
+{"name":"Potain MD 205","hh_ok":10.1,"koenig":8.5,"gal":6.7,"al":{40:7.2,45:7.9,50:8.5,55:8.8,60:9.4}},
+{"name":"Potain MD 208","hh_ok":9.3,"koenig":8.6,"gal":6.7,"al":{40:6.6,45:6.9,50:7.4,55:7.7,60:8.3}},
+{"name":"Potain MD 235","hh_ok":10.3,"koenig":10.0,"gal":8.8,"al":{40:9.0,45:9.4,50:10.1,55:10.7,60:11.0,65:11.4}},
+{"name":"Potain MD 238","hh_ok":9.4,"koenig":10.5,"gal":7.9,"al":{40:8.22,45:8.8,50:9.5,55:9.8,60:10.2,65:10.5}},
+{"name":"Potain MD 265","hh_ok":10.3,"koenig":10.0,"gal":7.6,"al":{40:10.1,45:10.6,50:10.9,55:11.8,60:12.7,65:13.0}},
+{"name":"Potain MD 285","hh_ok":10.3,"koenig":12.7,"gal":9.7,"al":{40:12.3,45:13.2,50:14.2,55:14.8,60:15.4,65:15.8,70:16.3}},
+{"name":"Potain MDT 120","hh_ok":null,"koenig":9.9,"gal":null,"al":{40:5.5,45:5.7,50:5.9,55:6.1}},
+{"name":"Potain MDT 128","hh_ok":10.2,"koenig":5.2,"gal":4.2,"al":{40:7.3,45:7.6,50:7.8,55:8.0}},
+{"name":"Potain MDT 132","hh_ok":10.6,"koenig":5.8,"gal":5.0,"al":{40:6.6,45:6.9,50:7.1,55:7.3}},
+{"name":"Potain MDT 162","hh_ok":10.9,"koenig":6.6,"gal":7.0,"al":{40:8.3,45:8.7,50:9.0,55:9.2,60:9.4}},
+{"name":"Potain MDT 178","hh_ok":10.5,"koenig":5.4,"gal":5.0,"al":{40:8.2,45:8.5,50:8.8,55:9.0,60:9.3}},
+{"name":"Potain MDT 192","hh_ok":11.3,"koenig":6.7,"gal":9.3,"al":{40:8.6,45:9.0,50:9.3,55:9.6,60:9.9}},
+{"name":"Potain MDT 218","hh_ok":10.5,"koenig":7.2,"gal":5.7,"al":{40:9.1,45:9.5,50:9.9,55:10.2,60:10.5,65:10.7}},
+{"name":"Potain MDT 218A","hh_ok":10.5,"koenig":6.6,"gal":6.0,"al":{40:9.6,45:10.0,50:10.4,55:10.7,60:11.0,65:11.2}},
+{"name":"Potain MDT 222","hh_ok":11.3,"koenig":8.1,"gal":10.4,"al":{40:9.6,45:10.2,50:10.6,55:11.0,60:11.3,65:11.5}},
+{"name":"Potain MDT 248","hh_ok":10.6,"koenig":8.5,"gal":8.3,"al":{40:9.5,45:10.2,50:10.5,55:11.0,60:11.3,65:11.6}},
+{"name":"Potain MDT 268","hh_ok":10.6,"koenig":8.5,"gal":8.5,"al":{40:10.2,45:11.1,50:11.0,55:12.0,60:12.3,65:12.6}},
+{"name":"Potain MDT 302","hh_ok":11.6,"koenig":10.8,"gal":12.9,"al":{40:13.2,45:14.1,50:14.6,55:15.5,60:15.6,65:16.1,70:16.5,75:17.0}},
+{"name":"Potain MDT 308","hh_ok":10.6,"koenig":10.1,"gal":10.0,"al":{40:12.2,45:12.3,50:13.3,55:13.1,60:14.1,65:14.5,70:14.8}},
+{"name":"Potain MDT 368","hh_ok":10.4,"koenig":11.0,"gal":14.1,"al":{40:14.7,45:15.5,50:15.7,55:15.6,60:16.6,65:17.6,70:18.0,75:18.3}},
+{"name":"Potain MDT 98","hh_ok":9.2,"koenig":5.6,"gal":0.0,"al":{40:7.1,45:7.4,50:7.7,55:7.9}},
+{"name":"Wilbert WT150","hh_ok":10.8,"koenig":6.0,"gal":9.3,"al":{40:8.3,45:9.4,50:9.9,55:10.4,60:11.0}},
+{"name":"Wilbert WT200","hh_ok":10.7,"koenig":7.89,"gal":10.63,"al":{40:9.38,45:10.6,50:11.2,55:11.8,60:12.3,65:14.2}},
+{"name":"Wilbert WT300","hh_ok":11.0,"koenig":10.6,"gal":10.5,"al":{40:11.26,50:15.6}},
+{"name":"Wilbert WT320","hh_ok":11.0,"koenig":9.3,"gal":15.5,"al":{40:11.8,45:14.0,50:14.8,55:15.25,60:15.7,65:17.8,70:18.1,75:18.5}},
+{"name":"Wilbert WT420","hh_ok":12.3,"koenig":11.93,"gal":17.8,"al":{40:14.6,45:16.9,50:17.8,55:18.7,60:21.0,65:21.55,70:22.1,75:23.2}},
+{"name":"Wilbert WT650","hh_ok":13.3,"koenig":20.7,"gal":null,"al":{}},
+{"name":"Wolff 120 SL","hh_ok":9.4,"koenig":9.5,"gal":8.0,"al":{40:6.77,45:7.65,50:8.2,55:8.75}},
+{"name":"Wolff 122 SL1","hh_ok":9.1,"koenig":6.4,"gal":8.7,"al":{40:7.3,45:7.9,50:8.45,55:9.1}},
+{"name":"Wolff 122 SL2","hh_ok":9.1,"koenig":7.1,"gal":8.7,"al":{40:7.3,45:7.9,50:8.45,55:9.1}},
+{"name":"Wolff 160 SL","hh_ok":9.4,"koenig":9.7,"gal":8.7,"al":{40:7.94,45:8.63,50:9.22,55:9.6}},
+{"name":"Wolff 192 SL","hh_ok":10.2,"koenig":8.7,"gal":9.6,"al":{40:8.4,45:9.1,50:9.4,55:10.1,60:11.0}},
+{"name":"Wolff 262 SL","hh_ok":11.2,"koenig":12.5,"gal":13.0,"al":{40:10.3,45:11.2,50:11.5,55:12.5,60:14.0,65:15.0,70:15.7}},
+{"name":"Wolff 4517 City","hh_ok":9.4,"koenig":3.1,"gal":3.0,"al":{40:6.1,45:6.5,50:6.8}},
+{"name":"Wolff 4615 SL","hh_ok":6.9,"koenig":4.9,"gal":5.8,"al":{40:5.2,45:5.6}},
+{"name":"Wolff 5015 FL","hh_ok":7.3,"koenig":5.6,"gal":5.0,"al":{40:5.8,45:6.3,50:6.7}},
+{"name":"Wolff 5520 FL","hh_ok":8.8,"koenig":6.7,"gal":7.3,"al":{40:7.4,45:8.0,50:8.3,55:8.9}},
+{"name":"Wolff 5520 FL-K","hh_ok":8.8,"koenig":5.7,"gal":7.5,"al":{40:9.2,45:9.8,50:10.0,55:10.6}},
+{"name":"Wolff 6015.8 clear","hh_ok":8.6,"koenig":7.4,"gal":8.7,"al":{40:7.2,45:7.3,50:8.0,55:8.0,60:8.7}},
+{"name":"Wolff 6017 FL","hh_ok":8.8,"koenig":7.9,"gal":7.5,"al":{40:7.5,45:8.1,50:8.3,55:8.9,60:9.7}},
+{"name":"Wolff 6023 clear","hh_ok":10.3,"koenig":9.1,"gal":13.0,"al":{40:8.6,45:8.85,50:9.6,55:9.65,60:10.4}},
+{"name":"Wolff 6028 comp.","hh_ok":null,"koenig":10.0,"gal":11.0,"al":{40:12.0,45:12.9,50:13.2,55:14.1,60:14.2}},
+{"name":"Wolff 6031 clear","hh_ok":10.3,"koenig":9.4,"gal":13.0,"al":{40:9.5,45:10.3,50:10.5,55:11.3,60:11.3,65:12.1}},
+{"name":"Wolff 6031 cross","hh_ok":null,"koenig":10.6,"gal":10.5,"al":{40:10.7,45:11.7,50:11.9,55:12.9,60:12.9,65:13.9}},
+{"name":"Wolff 62 SL","hh_ok":7.6,"koenig":4.1,"gal":3.5,"al":{40:3.75}},
+{"name":"Wolff 6522 FL","hh_ok":11.6,"koenig":10.0,"gal":8.8,"al":{40:8.8,45:9.4,50:9.8,55:10.6,60:11.2,65:11.9}},
+{"name":"Wolff 6531 FL","hh_ok":10.2,"koenig":10.56,"gal":10.4,"al":{40:10.6,45:11.6,50:11.9,55:12.9,60:12.9,65:13.9}},
+{"name":"Wolff 70 SL","hh_ok":null,"koenig":5.5,"gal":5.6,"al":{40:5.6}},
+{"name":"Wolff 7031 FL","hh_ok":11.2,"koenig":10.0,"gal":12.6,"al":{40:10.0,45:11.0,50:11.2,55:12.1,60:13.3,65:14.3,70:15.0}},
+{"name":"Wolff 71 SL","hh_ok":6.9,"koenig":4.9,"gal":5.5,"al":{40:5.2,45:5.6}},
+{"name":"Wolff 73 SL","hh_ok":null,"koenig":4.7,"gal":3.3,"al":{40:5.2,45:5.6}},
+{"name":"Wolff 7532 FL","hh_ok":10.6,"koenig":10.56,"gal":11.3,"al":{40:12.0,45:12.9,50:13.2,55:14.2,60:15.8,65:16.7,70:16.8,75:17.7}},
+{"name":"Wolff 90 SL1","hh_ok":9.4,"koenig":6.65,"gal":6.8,"al":{40:5.82,45:6.37}},
+{"name":"Wolff 90 SL2","hh_ok":9.4,"koenig":6.65,"gal":6.8,"al":{40:5.82,45:6.37}},
+{"name":"Wolff 91 SL","hh_ok":7.3,"koenig":5.7,"gal":5.3,"al":{40:5.3,45:5.9,50:6.3}},
+{"name":"Wolff 92 SL","hh_ok":8.4,"koenig":6.8,"gal":5.5,"al":{40:6.05,45:6.65,50:7.0}},
+];
+
+let communityKrane=[];
+function allKrane(){
+  return [...STAMMDATEN,...communityKrane]
+    .sort((a,b)=>a.name.localeCompare(b.name,'de'));
+}
+
+// localStorage-Fallback (für eigenständige HTML-Datei)
+function renderGewichte(kran){
+  const box   = document.getElementById('gewichtBox');
+  const table = document.getElementById('gewichtTable');
+  const alKeys = Object.keys(kran.al||{}).map(Number).sort((a,b)=>a-b);
+  const tdStyle = 'padding:7px 14px;border-bottom:0.5px solid #eee;';
+  const thStyle = 'padding:7px 14px;border-bottom:0.5px solid #d3d1c7;background:#f9f8f5;font-weight:500;font-size:11px;color:#5f5e5a;text-align:left;';
+
+  let rows = `<thead><tr>
+    <th style="${thStyle}">Komponente</th>
+    <th style="${thStyle}text-align:right">Gewicht (t)</th>
+  </tr></thead><tbody>`;
+
+  function row(label, val){
+    const v = (val!=null && !isNaN(val)) ? parseFloat(val).toFixed(2)+' t' : '—';
+    rows += `<tr><td style="${tdStyle}">${label}</td><td style="${tdStyle}text-align:right;font-variant-numeric:tabular-nums">${v}</td></tr>`;
+  }
+
+  row('Drehteil/Turmspitze', kran.koenig);
+  row('Gegenausleger', kran.gal);
+  alKeys.forEach(len => row('Ausleger '+len+' m', kran.al[len]));
+
+  rows += '</tbody>';
+  table.innerHTML = rows;
+  box.style.display = 'block';
+}
+
+// ── View switching ────────────────────────────────────────────────────────
+function showView(v){
+  document.getElementById('view-rechner').style.display        = (v==='rechner')        ? 'block' : 'none';
+  document.getElementById('view-kranverwaltung').style.display = (v==='kranverwaltung') ? 'block' : 'none';
+  if(v==='kranverwaltung') renderKranListe();
+}
+
+// ── Kranverwaltung Liste ─────────────────────────────────────────────────
+function renderKranListe(){
+  const q = (document.getElementById('kvSearch').value||'').toLowerCase();
+  const all = allKrane();
+  const filtered = all.filter(k=>k.name.toLowerCase().includes(q));
+  const div = document.getElementById('kvListe');
+  document.getElementById('kvCount').textContent =
+    all.length+' Modelle ('+STAMMDATEN.length+' Stammdaten · '+communityKrane.length+' Community)';
+  if(!filtered.length){
+    div.innerHTML='<div style="padding:16px;text-align:center;color:#888;font-size:13px">Keine Modelle gefunden</div>';
+    return;
+  }
+  const rows = filtered.map((k,i)=>{
+    const isCom = communityKrane.includes(k);
+    const alKeys = Object.keys(k.al||{}).map(Number).sort((a,b)=>a-b);
+    const badge = isCom
+      ? '<span class="badge community">Community</span>'
+      : '<span class="badge">Stammdaten</span>';
+    const borderStyle = isCom ? 'border-left:3px solid #1D9E75;' : '';
+    const by = isCom && k.addedBy ? ' · '+k.addedBy : '';
+    const delBtn = isCom
+      ? `<button onclick="kvDelete('${k.name.replace(/'/g,"\'")}') "
+          style="border:none;background:none;color:#D85A30;cursor:pointer;font-size:12px;padding:2px 6px">✕</button>`
+      : '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;
+              padding:10px 14px;border-bottom:0.5px solid #eee;${borderStyle}">
+      <div>
+        <div style="font-weight:500;font-size:13px">${k.name}</div>
+        <div style="font-size:11px;color:#5f5e5a;margin-top:2px">
+          HH zu OK: ${k.hh_ok||'—'} m · Drehteil/Turmspitze: ${k.koenig||'—'} t ·
+          Ausleger: ${alKeys.map(l=>l+'m').join(', ')||'—'}${by}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">${badge}${delBtn}</div>
+    </div>`;
+  }).join('');
+  div.innerHTML = rows;
+}
+
+function kvDelete(name){
+  const kran = communityKrane.find(k=>k.name===name);
+  if(!kran) return;
+  const eingabe = prompt('Kran "'+name+'" löschen.\nBitte Namen des Erfassers eingeben zur Bestätigung:');
+  if(eingabe === null) return; // abgebrochen
+  if(eingabe.trim().toLowerCase() !== (kran.addedBy||'').toLowerCase()){
+    alert('Name stimmt nicht überein. Nur "'+kran.addedBy+'" kann diesen Kran löschen.');
+    return;
+  }
+  communityKrane = communityKrane.filter(k=>k.name!==name);
+  saveCommunity(); buildSelect(); renderKranListe();
+}
+
+// ── Formular anzeigen/verbergen ──────────────────────────────────────────
+function showKranForm(){
+  document.getElementById('kvFormWrap').style.display='block';
+  document.getElementById('kvCSVWrap').style.display='none';
+  document.getElementById('kvFormTitle').textContent='Neuer Kran';
+  // clear form
+  ['kvModell','kvHhOk','kvKoenig','kvGal','kvUser',
+   'kvAL35','kvAL40','kvAL45','kvAL50','kvAL55','kvAL60','kvAL65','kvAL70','kvAL75','kvAL80']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('kvConfirm').checked=false;
+  document.getElementById('kvError').textContent='';
+  document.getElementById('kvSuccess').style.display='none';
+  document.getElementById('kvSaveBtn').disabled=true;
+  document.getElementById('kvFormWrap').scrollIntoView({behavior:'smooth'});
+}
+function hideKranForm(){
+  document.getElementById('kvFormWrap').style.display='none';
+}
+function showCSVImport(){
+  document.getElementById('kvCSVWrap').style.display='block';
+  document.getElementById('kvFormWrap').style.display='none';
+  document.getElementById('kvCSVWrap').scrollIntoView({behavior:'smooth'});
+}
+function hideCSVImport(){
+  document.getElementById('kvCSVWrap').style.display='none';
+}
+
+// ── Formular Validierung + Speichern ────────────────────────────────────
+function kvValidate(){
+  const ok = document.getElementById('kvModell').value.trim() &&
+             document.getElementById('kvHhOk').value &&
+             document.getElementById('kvUser').value.trim() &&
+             document.getElementById('kvConfirm').checked;
+  const e = document.getElementById('kvError');
+  if(!document.getElementById('kvModell').value.trim()) e.textContent='Modellbezeichnung erforderlich';
+  else if(!document.getElementById('kvHhOk').value) e.textContent='HH zu OK Turmdrehkran erforderlich';
+  else if(!document.getElementById('kvUser').value.trim()) e.textContent='Name / Firma erforderlich';
+  else if(!document.getElementById('kvConfirm').checked) e.textContent='Bitte bestätigen';
+  else e.textContent='';
+  document.getElementById('kvSaveBtn').disabled=!ok;
+}
+function kvSave(){
+  const h = document.getElementById('kvHersteller').value;
+  const m = document.getElementById('kvModell').value.trim();
+  const fullName = h+' '+m;
+  if(allKrane().find(k=>k.name.toLowerCase()===fullName.toLowerCase())){
+    document.getElementById('kvError').textContent='Modell bereits vorhanden';return;
+  }
+  const al={};
+  [35,40,45,50,55,60,65,70,75,80].forEach(l=>{
+    const v=parseFloat(document.getElementById('kvAL'+l).value);
+    if(!isNaN(v)&&v>0) al[l]=v;
+  });
+  communityKrane.push({
+    name: fullName,
+    hh_ok: parseFloat(document.getElementById('kvHhOk').value),
+    koenig: parseFloat(document.getElementById('kvKoenig').value)||null,
+    gal: parseFloat(document.getElementById('kvGal').value)||null,
+    al,
+    addedBy: document.getElementById('kvUser').value.trim(),
+    addedAt: new Date().toLocaleDateString('de-CH')
+  });
+  saveCommunity(); buildSelect(); renderKranListe();
+  document.getElementById('kvSuccess').style.display='block';
+  document.getElementById('kvSaveBtn').disabled=true;
+  setTimeout(function(){
+    document.getElementById('kvSuccess').style.display='none';
+    hideKranForm();
+  }, 1500);
+}
+
+// ── CSV Import (Kranverwaltung) ──────────────────────────────────────────
+function downloadVorlage(){
+  // Pre-built Excel template embedded as base64
+  const b64 = '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';
+  const byteChars = atob(b64);
+  const byteNums = new Array(byteChars.length);
+  for(let i=0;i<byteChars.length;i++) byteNums[i]=byteChars.charCodeAt(i);
+  const blob = new Blob([new Uint8Array(byteNums)], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kran_vorlage.xlsx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+function importCSVKV(){
+  const file = document.getElementById('csvFileKV').files[0];
+  const user = document.getElementById('csvUser').value.trim();
+  const confirmed = document.getElementById('csvConfirmKV').checked;
+  const err = document.getElementById('csvErrKV');
+  if(!file){err.textContent='Bitte Excel-Datei wählen';return;}
+  if(!user){err.textContent='Name / Firma erforderlich';return;}
+  if(!confirmed){err.textContent='Bitte bestätigen';return;}
+  err.textContent='';
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+
+      // Key map: try both label and internal key names
+      const keyMap = {
+        'name':'name','modellname':'name',
+        'hh_ok':'hh_ok','hh zu ok turmdrehkran (m)':'hh_ok',
+        'koenig':'koenig','könig (t)':'koenig',
+        'gal':'gal','gegenausleger (t)':'gal',
+        'al35':'al35','ausleger 35m (t)':'al35',
+        'al40':'al40','ausleger 40m (t)':'al40',
+        'al45':'al45','ausleger 45m (t)':'al45',
+        'al50':'al50','ausleger 50m (t)':'al50',
+        'al55':'al55','ausleger 55m (t)':'al55',
+        'al60':'al60','ausleger 60m (t)':'al60',
+        'al65':'al65','ausleger 65m (t)':'al65',
+        'al70':'al70','ausleger 70m (t)':'al70',
+        'al75':'al75','ausleger 75m (t)':'al75',
+        'al80':'al80','ausleger 80m (t)':'al80',
+      };
+
+      function getVal(row, key){
+        // Try direct key first
+        if(row[key]!==undefined && row[key]!=='') return row[key];
+        // Try case-insensitive label match
+        for(const k of Object.keys(row)){
+          if((keyMap[k.toLowerCase()]||k.toLowerCase()) === key)
+            return row[k];
+        }
+        return null;
+      }
+
+      // Skip the internal key row (row where name cell = 'name')
+      const dataRows = rows.filter(r => {
+        const n = String(getVal(r,'name')||'').trim().toLowerCase();
+        return n && n !== 'name';
+      });
+
+      let added=0, skipped=0, errList=[];
+      const lens=[35,40,45,50,55,60,65,70,75,80];
+
+      dataRows.forEach(function(row){
+        const kName = String(getVal(row,'name')||'').trim();
+        if(!kName){skipped++;return;}
+        if(allKrane().find(k=>k.name.toLowerCase()===kName.toLowerCase())){
+          errList.push('"'+kName+'" bereits vorhanden'); skipped++;return;
+        }
+        const al={};
+        lens.forEach(function(l){
+          const w = parseFloat(getVal(row,'al'+l));
+          if(!isNaN(w) && w>0) al[l]=w;
+        });
+        communityKrane.push({
+          name: kName,
+          hh_ok:  parseFloat(getVal(row,'hh_ok'))  || null,
+          koenig: parseFloat(getVal(row,'koenig')) || null,
+          gal:    parseFloat(getVal(row,'gal'))    || null,
+          al, addedBy: user,
+          addedAt: new Date().toLocaleDateString('de-CH')
+        });
+        added++;
+      });
+
+      saveCommunity(); buildSelect(); renderKranListe();
+      const msg=document.getElementById('csvSuccessKV');
+      msg.style.display='block';
+      msg.textContent=added+' Krane importiert'+(skipped?' · '+skipped+' übersprungen':'')+
+        (errList.length?' · '+errList.slice(0,3).join(', '):'');
+    }catch(ex){
+      document.getElementById('csvErrKV').textContent='Fehler beim Lesen der Datei: '+ex.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function clearCommunity(){
+  const eingabe = prompt('Alle Community-Krane löschen?\nZur Bestätigung "LÖSCHEN" eingeben:');
+  if(!eingabe || eingabe.trim() !== 'LÖSCHEN') return;
+  communityKrane=[]; saveCommunity(); buildSelect(); renderKranListe();
+}
+
+
+function openKranModal(){
+  document.getElementById('kranModalOverlay').style.display='block';
+  document.getElementById('kranModal').style.display='block';
+  // reset form
+  ['mModell','mHhOk','mKoenig','mGal','mUser',
+   'mAL35','mAL40','mAL45','mAL50','mAL55','mAL60','mAL65','mAL70','mAL75','mAL80']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('mTurmspitze').checked=false;
+  document.getElementById('mConfirm').checked=false;
+  document.getElementById('mError').textContent='';
+  document.getElementById('mSuccess').style.display='none';
+  document.getElementById('mSaveBtn').disabled=true;
+}
+function closeKranModal(){
+  document.getElementById('kranModalOverlay').style.display='none';
+  document.getElementById('kranModal').style.display='none';
+}
+function mValidate(){
+  const ok = document.getElementById('mModell').value.trim() &&
+             document.getElementById('mHhOk').value &&
+             document.getElementById('mUser').value.trim() &&
+             document.getElementById('mConfirm').checked;
+  const e = document.getElementById('mError');
+  if(!document.getElementById('mModell').value.trim()) e.textContent='Modellbezeichnung erforderlich';
+  else if(!document.getElementById('mHhOk').value) e.textContent='HH zu OK erforderlich';
+  else if(!document.getElementById('mUser').value.trim()) e.textContent='Name/Firma erforderlich';
+  else if(!document.getElementById('mConfirm').checked) e.textContent='Bitte bestätigen';
+  else e.textContent='';
+  document.getElementById('mSaveBtn').disabled=!ok;
+}
+function mSave(){
+  const h = document.getElementById('mHersteller').value;
+  const m = document.getElementById('mModell').value.trim();
+  const fullName = h+' '+m;
+  if(allKrane().find(k=>k.name.toLowerCase()===fullName.toLowerCase())){
+    document.getElementById('mError').textContent='Modell bereits vorhanden';return;
+  }
+  const al={};
+  [35,40,45,50,55,60,65,70,75,80].forEach(l=>{
+    const v=parseFloat(document.getElementById('mAL'+l).value);
+    if(!isNaN(v)&&v>0) al[l]=v;
+  });
+  const kran = {
+    name: fullName,
+    hh_ok:  parseFloat(document.getElementById('mHhOk').value)||null,
+    koenig: parseFloat(document.getElementById('mKoenig').value)||null,
+    gal:    parseFloat(document.getElementById('mGal').value)||null,
+    turmspitze: document.getElementById('mTurmspitze').checked,
+    al,
+    addedBy: document.getElementById('mUser').value.trim(),
+    addedAt: new Date().toLocaleDateString('de-CH')
+  };
+  communityKrane.push(kran);
+  saveCommunity();
+  buildSelect();
+  // Auto-select the new kran
+  const idx = allKrane().findIndex(k=>k.name===fullName);
+  if(idx>=0){
+    document.getElementById('kranSelect').value=idx;
+    onKranChange();
+  }
+  document.getElementById('mSuccess').textContent='Gespeichert: '+fullName+' ✓';
+  document.getElementById('mSuccess').style.display='block';
+  document.getElementById('mSaveBtn').disabled=true;
+  setTimeout(closeKranModal, 1400);
+}
+
+function printPDF(){
+  const ausladung  = document.getElementById('ausladung').value;
+  const hakenh     = document.getElementById('hakenh').value;
+  const rollenkopf = document.getElementById('rollenkopf').value;
+  const niveau     = document.getElementById('niveau').value;
+  const kranhoehe  = document.getElementById('kranhoehe').value;
+  const abweichung = document.getElementById('abweichung').value;
+  const ausleger   = document.getElementById('resAusleger').textContent;
+  const kranName   = document.getElementById('infoName').textContent;
+  const dtText     = document.getElementById('infoDT').textContent;
+  const topless    = document.getElementById('infoTopless').checked;
+  const svgEl      = document.getElementById('schema');
+  const gewichtTable = document.getElementById('gewichtTable');
+
+  if(!kranName){ alert('Bitte zuerst einen Turmdrehkran wählen.'); return; }
+
+  const svgClone = svgEl.cloneNode(true);
+  svgClone.setAttribute('width','100%');
+  svgClone.setAttribute('style','display:block;width:100%;height:auto');
+
+  const niveauVal = parseFloat(niveau)||0;
+
+  // Eingabewerte als 4-spaltige Tabelle (2 Paare nebeneinander)
+  const pairs = [
+    ['Turmdrehkran',                  kranName,          'Topless-Kran',                topless?'Ja':'Nein'],
+    ['Hakenhöhe',                     hakenh+' m',       'Drehteil/Turmspitze',         dtText],
+    ['Ausladung zu Turmdrehkran',     ausladung+' m',    'Oberkante TDK zu RK Autokran',rollenkopf+' m'],
+    ['Niveauunterschied',             (niveauVal===0?'±0':niveau)+' m',
+                                                         'Höhe Anlenkpunkt Ausleger',   kranhoehe+' m'],
+    ['Distanz Anlenkpunkt ab Drehpunkt', abweichung+' m','',''],
+  ];
+
+  const td  = 'padding:5px 8px;border-bottom:0.5px solid #eee;font-size:11px;';
+  const tdL = td+'color:#888;width:20%';
+  const tdV = td+'font-weight:500;width:30%';
+
+  const tableRows = pairs.map(([l1,v1,l2,v2])=>`
+    <tr>
+      <td style="${tdL}">${l1}</td><td style="${tdV}">${v1}</td>
+      <td style="${tdL}">${l2||''}</td><td style="${tdV}">${v2||''}</td>
+    </tr>`).join('');
+
+  // Gewichte: kompakt, alle ausleger inline
+  let gewichtRows = '';
+  if(gewichtTable){
+    const rows = gewichtTable.querySelectorAll('tbody tr');
+    const gData = [];
+    rows.forEach(r=>{
+      const cells = r.querySelectorAll('td');
+      if(cells.length>=2) gData.push([cells[0].textContent.trim(), cells[1].textContent.trim()]);
+    });
+    // Group: first 2 rows = Drehteil/GAL, rest = Ausleger
+    const fixed = gData.filter(r=>!r[0].startsWith('Ausleger'));
+    const alRows = gData.filter(r=>r[0].startsWith('Ausleger'));
+    const fixedHTML = fixed.map(([l,v])=>`
+      <tr><td style="${tdL}">${l}</td><td style="${tdV}">${v}</td>
+          <td style="${tdL}"></td><td style="${tdV}"></td></tr>`).join('');
+    // Ausleger in pairs
+    let alHTML = '';
+    for(let i=0;i<alRows.length;i+=2){
+      const [l1,v1]=alRows[i], r2=alRows[i+1]||['',''];
+      alHTML+=`<tr><td style="${tdL}">${l1}</td><td style="${tdV}">${v1}</td>
+               <td style="${tdL}">${r2[0]}</td><td style="${tdV}">${r2[1]}</td></tr>`;
+    }
+    gewichtRows = fixedHTML + alHTML;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8">
+<title>Ausleger-Rechner</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;color:#2c2c2a;padding:14mm;background:#fff;font-size:12px}
+  @page{margin:12mm;size:A4 portrait}
+  h1{font-size:14px;font-weight:600;margin-bottom:12px}
+  .result-label{font-size:10px;color:#888;margin-bottom:2px}
+  .result{font-size:28px;font-weight:700;margin-bottom:12px;color:#2c2c2a}
+  .section{font-size:10px;font-weight:600;color:#888;margin:10px 0 4px;
+    text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid #eee;padding-bottom:2px}
+  table{width:100%;border-collapse:collapse}
+  .layout{display:flex;gap:14px;align-items:flex-start;margin-top:8px}
+  .col-left{flex:1;min-width:0}
+  .col-right{width:44%;flex-shrink:0}
+  @media print{body{padding:0}button{display:none}}
+</style>
+</head><body>
+  <h1>Berechnung minimale Auslegerlänge für Turmkran-Montagen</h1>
+
+  <div class="result-label">Berechnete Minimale Auslegerlänge des Autokrans</div>
+  <div class="result">${ausleger}</div>
+
+  <div class="section">Eingabewerte</div>
+  <table>${tableRows}</table>
+
+  <div class="layout">
+    <div class="col-left">
+      <div class="section" style="margin-top:10px">Schema (massstäblich)</div>
+      ${svgClone.outerHTML}
+    </div>
+    ${gewichtRows ? `<div class="col-right">
+      <div class="section" style="margin-top:10px">Komponentengewichte</div>
+      <table>${gewichtRows}</table>
+    </div>` : ''}
+  </div>
+
+  <script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+function loadCommunity(){
+  try{const d=localStorage.getItem('community_krane');if(d)communityKrane=JSON.parse(d);}catch(e){communityKrane=[];}
+  buildSelect();renderDB();
+}
+function saveCommunity(){try{localStorage.setItem('community_krane',JSON.stringify(communityKrane));}catch(e){}}
+
+function buildSelect(){
+  const sel=document.getElementById('kranSelect');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Kranmodell wählen —</option>';
+  allKrane().forEach((k,i)=>{const o=document.createElement('option');o.value=i;o.textContent=k.name+(communityKrane.includes(k)?' (Community)':'');sel.appendChild(o);});
+  if(cur)sel.value=cur;
+}
+function onKranChange(){
+  // Reset rollenkopf to auto when switching crane
+  const rk=document.getElementById('rollenkopf');
+  rk.dataset.userModified='';
+  berechne();
+}
+function toggleAdv(){
+  const p=document.getElementById('advPanel'),c=document.getElementById('advChev');
+  const open=p.classList.toggle('open');
+  c.textContent=open?'▲':'▼';
+}
+
+function berechne(){
+  const idx=parseInt(document.getElementById('kranSelect').value);
+  const kran=isNaN(idx)?null:allKrane()[idx];
+  const hakenh=parseFloat(document.getElementById('hakenh').value)||0;
+  const ausladung=parseFloat(document.getElementById('ausladung').value)||0;
+  const niveau=parseFloat(document.getElementById('niveau').value)||0;
+  const kranhoehe=parseFloat(document.getElementById('kranhoehe').value)||3;
+  const abweichung=parseFloat(document.getElementById('abweichung').value)||1;
+  const hh_ok=kran?kran.hh_ok:0;
+  // Auto-set rollenkopf default BEFORE reading the value
+  const rkField = document.getElementById('rollenkopf');
+  if(kran && !rkField.dataset.userModified){
+    rkField.value = (kran.turmspitze||kran.topless) ? 10 : 5;
+  }
+  const rollenkopf=parseFloat(rkField.value)||0;
+  const hoeheTotal=hakenh+hh_ok+rollenkopf+niveau;
+  const effHoehe=hoeheTotal-kranhoehe;
+  const effAusladung=ausladung+abweichung;
+  const ausleger=Math.sqrt(effAusladung*effAusladung+effHoehe*effHoehe);
+  document.getElementById('resAusleger').textContent=kran?ausleger.toFixed(1)+' m':'—';
+  document.getElementById('resSub').textContent=kran?'':'Bitte Kranmodell wählen';
+  // Info block
+  const infoBox=document.getElementById('kranInfo');
+  if(kran){
+    infoBox.style.display='block';
+    document.getElementById('infoName').textContent=kran.name;
+    document.getElementById('infoHH').textContent=(parseFloat(document.getElementById('hakenh').value)||0).toFixed(1)+' m';
+    document.getElementById('infoDT').textContent=kran.hh_ok!=null?kran.hh_ok.toFixed(1)+' m':'—';
+    document.getElementById('infoTopless').checked=!!(kran.turmspitze||kran.topless);
+  } else {
+    infoBox.style.display='none';
+  }
+
+  if(kran){
+    drawSchema(effAusladung,effHoehe,ausleger,hakenh,hh_ok,niveau,kranhoehe,rollenkopf,kran);
+    renderGewichte(kran);
+  } else {
+    document.getElementById('gewichtBox').style.display='none';
+  }
+}
+
+function drawSchema(effAusladung,effHoehe,ausleger,hakenh,koenig,niveau,kranhoehe,rollenkopf,kran){
+  // Parameter-Bedeutung:
+  // effAusladung = ausladung + abweichung = horizontale Distanz Anlenkpunkt → Turmachse
+  // ausladung    = horizontale Distanz Drehpunkt Autokran → Turmachse  (aus Eingabe)
+  // abweichung   = Versatz Anlenkpunkt hinter Drehpunkt                (aus Eingabe)
+  // Diese werden separat aus den Input-Feldern gelesen für die Darstellung:
+  const ausladung   = parseFloat(document.getElementById('ausladung').value)||0;
+  const abweichung  = parseFloat(document.getElementById('abweichung').value)||1;
+
+  const svg=document.getElementById('schema');
+  svg.querySelectorAll('.dyn').forEach(e=>e.remove());
+  document.getElementById('svg-ph').style.display='none';
+  const ns='http://www.w3.org/2000/svg';
+
+  function el(tag,attrs){
+    const e=document.createElementNS(ns,tag);
+    Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
+    e.classList.add('dyn'); svg.appendChild(e); return e;
+  }
+  function line(x1,y1,x2,y2,stroke,sw,dash){
+    const a={x1,y1,x2,y2,stroke:stroke||'#555','stroke-width':sw||1.5};
+    if(dash)a['stroke-dasharray']=dash;
+    el('line',a);
+  }
+  function txt(x,y,t,anch,fill,sz,fw){
+    const e=el('text',{x,y,'text-anchor':anch||'middle',
+      fill:fill||'#444','font-size':sz||10.5,'font-family':'system-ui,sans-serif'});
+    if(fw)e.setAttribute('font-weight',fw);
+    e.textContent=t;
+  }
+  function dimH(x1,x2,y,label,col){
+    const c=col||'#555';
+    el('line',{x1,y1:y,x2,y2:y,stroke:c,'stroke-width':0.9,
+      'marker-start':'url(#arrS)','marker-end':'url(#arr)'});
+    line(x1,y-4,x1,y+4,c,0.8);
+    line(x2,y-4,x2,y+4,c,0.8);
+    txt((x1+x2)/2,y-5,label,'middle',c,10);
+  }
+  function dimV(x,y1,y2,label,side,col){
+    const c=col||'#555';
+    el('line',{x1:x,y1:y1,x2:x,y2:y2,stroke:c,'stroke-width':0.9,
+      'marker-start':'url(#arrS)','marker-end':'url(#arr)'});
+    line(x-4,y1,x+4,y1,c,0.8);
+    line(x-4,y2,x+4,y2,c,0.8);
+    txt(x+(side==='right'?6:-6),(y1+y2)/2+4,label,side==='right'?'start':'end',c,10);
+  }
+  function helpLine(x1,y1,x2,y2){ line(x1,y1,x2,y2,'#ccc',0.6,'3,3'); }
+
+  // ── Canvas ───────────────────────────────────────────────────────────────
+  const W=460, H=520;
+  const padL=62, padR=115, padT=40, padB=80;
+  const drawW=W-padL-padR, drawH=H-padT-padB;
+
+  // ── Massstab: gleicher sc für X und Y ────────────────────────────────────
+  const nAbs=Math.abs(niveau);
+  // Horizontale Ausdehnung: effAusladung (Anlenkpunkt → Turmachse)
+  const totalW = effAusladung;
+  // Vertikale Ausdehnung: effHoehe + kranhoehe + Grube + etwas Luft
+  const totalH = effHoehe + kranhoehe + nAbs + 3;
+  const sc = Math.min(drawW/totalW, drawH/totalH);
+
+  // ── Koordinaten ──────────────────────────────────────────────────────────
+  const acGroundY  = padT + drawH;
+  const tkGroundY  = acGroundY - niveau*sc;
+
+  // tkX = rechts, acX = Anlenkpunkt links
+  // effAusladung × sc = tkX - acX  → tkX = padL + effAusladung*sc
+  const acX        = padL;                        // Anlenkpunkt Autokran
+  const drehX      = acX + abweichung*sc;         // Drehpunkt Autokran (= Mittelpunkt)
+  const tkX        = acX + effAusladung*sc;       // Turmachse — genau effAusladung rechts vom Anlenkpunkt
+
+  const acAnlenkY  = acGroundY - kranhoehe*sc;
+
+  // TDK-Höhen (alle ab tkGroundY)
+  const hakenY     = tkGroundY - hakenh*sc;                          // Haken
+  const tkSpitzeY  = tkGroundY - (hakenh + koenig)*sc;              // OK TDK (exakt in Metern)
+  const rollkopfYraw = tkGroundY - (hakenh + koenig + rollenkopf)*sc;
+  const rollkopfY  = Math.min(rollkopfYraw, tkSpitzeY - 14); // min 14px gap für Label
+
+  // ── Gelände ──────────────────────────────────────────────────────────────
+  line(acX-20, acGroundY, tkX+(niveau<0?-1:20), acGroundY, '#999', 1.5);
+  for(let x=acX-18; x<tkX+(niveau<0?0:18); x+=12)
+    line(x, acGroundY, x-8, acGroundY+8, '#ccc', 0.8);
+
+  if(Math.abs(niveau)>0.2){
+    const gx=tkX-2*sc;
+    if(niveau<0){
+      line(gx,acGroundY,gx,tkGroundY,'#777',1.5);
+      line(gx,tkGroundY,tkX+20,tkGroundY,'#999',1.5);
+      for(let x=gx+4;x<tkX+18;x+=12) line(x,tkGroundY,x-8,tkGroundY+8,'#ccc',0.8);
+      for(let y=acGroundY+4;y<tkGroundY;y+=10) line(gx,y,gx-8,y+8,'#bbb',0.8);
+      const px=tkX+44;
+      el('line',{x1:px,y1:acGroundY,x2:px,y2:tkGroundY,stroke:'#E24B4A','stroke-width':0.9,
+        'marker-start':'url(#arrRS)','marker-end':'url(#arrR)'});
+      line(px-5,acGroundY,px+5,acGroundY,'#E24B4A',0.8);
+      line(px-5,tkGroundY,px+5,tkGroundY,'#E24B4A',0.8);
+      txt(px+7,(acGroundY+tkGroundY)/2+4,nAbs.toFixed(1)+' m','start','#E24B4A',10);
+      txt(px+7,(acGroundY+tkGroundY)/2+15,'Grube','start','#E24B4A',9);
+    } else {
+      line(tkX-2*sc,acGroundY,tkX-2*sc,tkGroundY,'#777',1.5);
+      line(tkX-2*sc,tkGroundY,tkX+20,tkGroundY,'#999',1.5);
+      for(let x=tkX-2*sc+4;x<tkX+18;x+=12) line(x,tkGroundY,x-8,tkGroundY-8,'#ccc',0.8);
+      const px=tkX+44;
+      el('line',{x1:px,y1:acGroundY,x2:px,y2:tkGroundY,stroke:'#E24B4A','stroke-width':0.9,
+        'marker-start':'url(#arrRS)','marker-end':'url(#arrR)'});
+      line(px-5,acGroundY,px+5,acGroundY,'#E24B4A',0.8);
+      line(px-5,tkGroundY,px+5,tkGroundY,'#E24B4A',0.8);
+      txt(px+7,(acGroundY+tkGroundY)/2+4,'+'+niveau.toFixed(1)+' m','start','#E24B4A',10);
+    }
+  } else {
+    line(tkX-2,acGroundY,tkX+20,acGroundY,'#999',1.5);
+    for(let x=tkX;x<tkX+18;x+=12) line(x,acGroundY,x-8,acGroundY+8,'#ccc',0.8);
+  }
+
+  // ── TURMKRAN ─────────────────────────────────────────────────────────────
+  const twH=Math.max(6, 1.0*sc);
+  // Turmlinie (von Fundament bis OK TDK)
+  line(tkX, tkGroundY, tkX, tkSpitzeY, '#444', 2.5);
+  line(tkX-twH, tkGroundY, tkX-twH, tkSpitzeY, '#aaa', 0.8, '4,3');
+  line(tkX+twH, tkGroundY, tkX+twH, tkSpitzeY, '#aaa', 0.8, '4,3');
+  // Fundament
+  line(tkX-1.5*sc, tkGroundY, tkX+1.5*sc, tkGroundY, '#444', 2.5);
+  // OK TDK: Querstriche + kleines Dreieck rein dekorativ (kein Maß-Offset)
+  line(tkX-twH, tkSpitzeY, tkX+twH, tkSpitzeY, '#444', 2);
+  el('polygon',{points:`${tkX},${tkSpitzeY-6} ${tkX-twH},${tkSpitzeY} ${tkX+twH},${tkSpitzeY}`,
+    fill:'none',stroke:'#444','stroke-width':1.5,'stroke-linejoin':'round'});
+  // Rollenkopf (gestrichelt über OK TDK)
+  line(tkX, tkSpitzeY, tkX, rollkopfY, '#888', 1, '4,3');
+  el('circle',{cx:tkX,cy:rollkopfY,r:3,fill:'none',stroke:'#888','stroke-width':1.5});
+
+  // Haken-Symbol
+  el('circle',{cx:tkX,cy:hakenY,r:3,fill:'none',stroke:'#aaa','stroke-width':1.5});
+  line(tkX, hakenY, tkX, tkSpitzeY, '#ddd', 1, '3,3'); // Haken-Seil angedeutet
+
+  // ── ANLENKPUNKT + DREHPUNKT ───────────────────────────────────────────────
+  el('circle',{cx:acX,cy:acAnlenkY,r:4,fill:'#444'});   // Anlenkpunkt (Ausleger-Fuss)
+  el('circle',{cx:drehX,cy:acGroundY,r:4,fill:'none',stroke:'#888','stroke-width':1.5}); // Drehpunkt
+
+  // ── AUSLEGER-DIAGONALE: Anlenkpunkt → Rollenkopf (= tkX, rollkopfY) ──────
+  // Ausleger endet EXAKT bei tkX (Turmachse), rollkopfY (Rollenkopf-Höhe)
+  // Kleiner Überhang für Visualisierung
+  const dx=tkX-acX, dy=rollkopfY-acAnlenkY;
+  const extX=tkX+dx*0.04, extY=rollkopfY+dy*0.04;
+  line(acX, acAnlenkY, extX, extY, '#1D9E75', 2.5);
+  el('circle',{cx:tkX,cy:rollkopfY,r:4,fill:'none',stroke:'#1D9E75','stroke-width':2});
+
+  // ── BEMASSUNGEN ───────────────────────────────────────────────────────────
+
+  // 1) Ausladung (Drehpunkt → Turmachse), horizontal unter Gelände
+  const distY=Math.max(acGroundY,tkGroundY)+26;
+  helpLine(drehX, acGroundY, drehX, distY+4);
+  helpLine(tkX,   tkGroundY, tkX,   distY+4);
+  dimH(drehX, tkX, distY, 'Ausladung  '+ausladung.toFixed(1)+' m');
+
+  // 2) Abweichung (Anlenkpunkt → Drehpunkt)
+  if(abweichung>0.1){
+    const abwY=distY+20;
+    helpLine(acX,  acGroundY, acX,  abwY+4);
+    helpLine(drehX,acGroundY, drehX,abwY+4);
+    dimH(acX, drehX, abwY, abweichung.toFixed(1)+' m', '#888');
+  }
+
+
+
+  // 4) Höhe total (Anlenkpunkt → Rollenkopf), links aussen
+  const vx1=padL-18;
+  helpLine(tkX, tkGroundY, vx1-4, tkGroundY);
+  helpLine(tkX, rollkopfY, vx1-4, rollkopfY);
+  const hoeheTotal = hakenh+koenig+rollenkopf+niveau;
+  dimV(vx1, tkGroundY, rollkopfY, hoeheTotal.toFixed(1)+' m', 'left');
+
+  // 5) Anlenkpunkt-Höhe: als kleine Beschriftung direkt am Punkt
+  if(kranhoehe>0.5){
+    // Kurzer horizontaler Strich + Text rechts vom Anlenkpunkt
+    line(acX+5, acAnlenkY, acX+22, acAnlenkY, '#888', 0.8);
+    line(acX+22, acAnlenkY, acX+22, acGroundY, '#888', 0.8, '3,2');
+    line(acX+18, acGroundY, acX+26, acGroundY, '#888', 0.8);
+    el('line',{x1:acX+22,y1:acAnlenkY+1,x2:acX+22,y2:acGroundY-1,stroke:'#888',
+      'stroke-width':0.8,'marker-start':'url(#arrS)','marker-end':'url(#arr)'});
+    txt(acX+30, (acAnlenkY+acGroundY)/2+4, kranhoehe.toFixed(1)+' m', 'start', '#888', 10);
+  }
+
+  // Spaltenabstand für rechte Bemassungen: fix 22px pro Spalte (unabhängig von sc)
+  const colW = 22;
+  // 6) Hakenhöhe HH (Fundament → Haken), rechts Spalte 1
+  const rx1 = Math.min(tkX + Math.max(18, 1.5*sc), W - 5);
+  helpLine(tkX, tkGroundY, rx1+4, tkGroundY);
+  helpLine(tkX, hakenY,    rx1+4, hakenY);
+  helpLine(tkX, tkSpitzeY, rx1+4, tkSpitzeY);
+  helpLine(tkX, rollkopfY, rx1+4, rollkopfY);
+  dimV(rx1, tkGroundY, hakenY,    'Hakenhöhe  '+hakenh.toFixed(1)+' m', 'right');
+  dimV(rx1, hakenY,    tkSpitzeY, 'Drehteil/Turmspitze  '+koenig.toFixed(1)+' m', 'right');
+  // Long label: two lines
+  el('line',{x1:rx1,y1:tkSpitzeY,x2:rx1,y2:rollkopfY,stroke:'#555','stroke-width':0.9,
+    'marker-start':'url(#arrS)','marker-end':'url(#arr)'});
+  line(rx1-4,tkSpitzeY,rx1+4,tkSpitzeY,'#555',0.8);
+  line(rx1-4,rollkopfY,rx1+4,rollkopfY,'#555',0.8);
+  const rkMidY=(tkSpitzeY+rollkopfY)/2;
+  txt(rx1+6, rkMidY-4,  'OK Turmdrehkran', 'start','#555',10);
+  txt(rx1+6, rkMidY+7, 'zu RK Autokran  '+rollenkopf.toFixed(1)+' m', 'start','#555',10);
+
+  // 9) Auslegerlänge: Label rotiert auf der Diagonalen
+  const midX=(acX+tkX)/2, midY=(acAnlenkY+rollkopfY)/2;
+  const angle=Math.atan2(rollkopfY-acAnlenkY, tkX-acX)*180/Math.PI;
+  const lbl=el('text',{x:midX,y:midY-9,'text-anchor':'middle',
+    fill:'#1D9E75','font-size':'12','font-family':'system-ui,sans-serif','font-weight':'600'});
+  lbl.setAttribute('transform',`rotate(${angle},${midX},${midY-9})`);
+  lbl.textContent='Ausleger  '+ausleger.toFixed(1)+' m';
+
+  txt(W/2, H-5, 'Massstäbliche Darstellung', 'middle', '#bbb', 9.5);
+}
+
+function renderDB(){
+  const q=(document.getElementById('dbSearch').value||'').toLowerCase();
+  const all=allKrane(),filtered=all.filter(k=>k.name.toLowerCase().includes(q));
+  document.getElementById('dbCount').textContent=`${all.length} Modelle (${STAMMDATEN.length} Stammdaten · ${communityKrane.length} Community)`;
+  const list=document.getElementById('kranList');list.innerHTML='';
+  filtered.forEach(k=>{const isCom=communityKrane.includes(k);const div=document.createElement('div');
+    div.className='kran-item'+(isCom?' community':'');const keys=Object.keys(k.al||{}).map(Number).sort((a,b)=>a-b);div.innerHTML=`<div><div class="name">${k.name}</div><div class="meta">HH zu OK Turmdrehkran: ${k.hh_ok||'—'} m · Drehteil/Turmspitze: ${k.koenig||'—'} t · Ausleger: ${keys.map(l=>l+'m').join(', ')||'—'}${isCom&&k.addedBy?' · von '+k.addedBy:''}</div></div><span class="badge${isCom?' community':''}">${isCom?'Community':'Stammdaten'}</span>`;list.appendChild(div);});
+  if(!filtered.length)list.innerHTML='<div style="padding:16px;text-align:center;color:#5f5e5a;font-size:13px">Keine Modelle gefunden</div>';
+}
+function showTab(t){['rechner','datenbank'].forEach((n,i)=>{document.querySelectorAll('.tab')[i].classList.toggle('active',n===t);document.getElementById('tab-'+n).classList.toggle('active',n===t);});}
+loadCommunity();
+</script>
+
+
+
+<!-- ── Kran erfassen Modal ── -->
+<div id="kranModalOverlay" onclick="closeKranModal()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100"></div>
+
+<div id="kranModal" style="display:none;position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:min(560px,94vw);max-height:90vh;overflow-y:auto;
+  background:#fff;border-radius:12px;padding:1.5rem;z-index:101;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+    <div style="font-size:15px;font-weight:600">Neuer Kran erfassen</div>
+    <button onclick="closeKranModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#888;line-height:1">✕</button>
+  </div>
+  <div class="notice" style="margin-bottom:12px;background:#E1F5EE;border-left-color:#1D9E75;color:#0F6E56">
+    Wird als <strong>Community-Kran</strong> gespeichert. Im Admin-Bereich bearbeitbar oder löschbar.
+  </div>
+
+  <div class="grid2">
+    <div class="field">
+      <label>Hersteller</label>
+      <select id="mHersteller">
+        <option>Liebherr</option><option>Potain</option><option>Wolffkran</option><option>Condecta</option>
+        <option>Wilbert</option><option>Sonstige</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Modellbezeichnung *</label>
+      <input type="text" id="mModell" placeholder="z.B. 280 EC-B" oninput="mValidate()">
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="field">
+      <label>HH zu OK Turmdrehkran (m) *</label>
+      <input type="number" id="mHhOk" step="0.01" placeholder="z.B. 10.5" oninput="mValidate()">
+    </div>
+    <div class="field">
+      <label>Drehteil/Turmspitze (t)</label>
+      <input type="number" id="mKoenig" step="0.01" placeholder="t">
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="field">
+      <label>Gegenausleger (t)</label>
+      <input type="number" id="mGal" step="0.01" placeholder="t">
+    </div>
+    <div class="field">
+      <label>Erfasst von *</label>
+      <input type="text" id="mUser" placeholder="Name / Firma" oninput="mValidate()">
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;
+    background:#EEF2FF;border-radius:8px;border:0.5px solid #9BA8DC;margin-bottom:12px">
+    <input type="checkbox" id="mTurmspitze">
+    <label for="mTurmspitze" style="font-size:13px;color:#4B5EAA;cursor:pointer">
+      Topless-Kran (Standard RK-Abstand 10m)
+    </label>
+  </div>
+  <div style="font-size:13px;font-weight:500;margin-bottom:8px">Auslegergewichte (t)</div>
+  <div class="grid3">
+    <div class="field"><label>35m</label><input type="number" id="mAL35" step="0.01" placeholder="t"></div>
+    <div class="field"><label>40m</label><input type="number" id="mAL40" step="0.01" placeholder="t"></div>
+    <div class="field"><label>45m</label><input type="number" id="mAL45" step="0.01" placeholder="t"></div>
+    <div class="field"><label>50m</label><input type="number" id="mAL50" step="0.01" placeholder="t"></div>
+    <div class="field"><label>55m</label><input type="number" id="mAL55" step="0.01" placeholder="t"></div>
+    <div class="field"><label>60m</label><input type="number" id="mAL60" step="0.01" placeholder="t"></div>
+    <div class="field"><label>65m</label><input type="number" id="mAL65" step="0.01" placeholder="t"></div>
+    <div class="field"><label>70m</label><input type="number" id="mAL70" step="0.01" placeholder="t"></div>
+    <div class="field"><label>75m</label><input type="number" id="mAL75" step="0.01" placeholder="t"></div>
+    <div class="field"><label>80m</label><input type="number" id="mAL80" step="0.01" placeholder="t"></div>
+  </div>
+  <div class="checkbox-row" style="margin-top:10px">
+    <input type="checkbox" id="mConfirm" onchange="mValidate()">
+    <label for="mConfirm" style="font-size:12px;color:#5f5e5a">
+      Ich bestätige, dass die Daten korrekt und aus offiziellen Herstellerangaben entnommen sind.
+    </label>
+  </div>
+  <div class="error" id="mError" style="margin-top:6px"></div>
+  <div class="btn-row" style="margin-top:12px">
+    <button class="btn primary" id="mSaveBtn" onclick="mSave()" disabled>Kran speichern</button>
+    <button class="btn" onclick="closeKranModal()">Abbrechen</button>
+  </div>
+  <div id="mSuccess" style="display:none;padding:10px;background:#E1F5EE;
+    border-radius:8px;color:#0F6E56;font-size:13px;margin-top:10px">Gespeichert ✓</div>
+</div>
+<div style="position:fixed;bottom:14px;right:20px;font-family:system-ui,sans-serif;font-size:10px;color:#d3d1c7;letter-spacing:0.04em;pointer-events:none;max-width:420px;text-align:right;line-height:1.5">Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</div>
+</body>
+</html>
