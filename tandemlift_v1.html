@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tandemlift-Rechner — KranTools</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#2c2c2a;min-height:100vh}
+.topbar{border-bottom:0.5px solid #d3d1c7;padding:0 20px;display:flex;align-items:center;gap:16px;height:48px;background:#fff;position:sticky;top:0;z-index:50}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.04em;color:#2c2c2a;text-decoration:none;line-height:1}
+.topbar-logo em{color:#f0c000;font-style:normal}
+.topbar-sep{color:#d3d1c7;font-size:16px}
+.topbar-name{font-size:13px;color:#888780}
+.burger-nav{position:fixed;top:6px;right:14px;z-index:1000}
+.burger-btn{width:38px;height:38px;background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0;transition:background 0.15s}
+.burger-btn:hover{background:#f1efe8}
+.burger-btn span{display:block;width:15px;height:1.5px;background:#2c2c2a;border-radius:2px;transition:all 0.2s}
+.burger-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger-btn.open span:nth-child(2){opacity:0}
+.burger-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger-overlay{display:none;position:fixed;inset:0;background:rgba(44,44,42,0.18);z-index:990;backdrop-filter:blur(2px)}
+.burger-overlay.open{display:block}
+.burger-drawer{position:fixed;top:0;right:-280px;width:260px;height:100%;background:#fff;border-left:0.5px solid #d3d1c7;z-index:995;padding:64px 0 32px;transition:right 0.25s cubic-bezier(0.25,0.8,0.25,1);display:flex;flex-direction:column}
+.burger-drawer.open{right:0}
+.drawer-section{font-size:10px;color:#b4b2a9;letter-spacing:0.14em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.drawer-section:first-child{margin-top:0}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;font-size:14px;color:#2c2c2a;text-decoration:none;transition:background 0.12s}
+.drawer-item:hover{background:#f5f5f3}
+.drawer-item.active{font-weight:500}
+.drawer-item.soon{color:#b4b2a9;cursor:default}
+.drawer-item.soon:hover{background:transparent}
+.drawer-badge{font-size:9px;padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase}
+.drawer-badge.live{background:#E1F5EE;color:#0F6E56;border:0.5px solid #1D9E75}
+.drawer-badge.soon{background:#f1efe8;color:#b4b2a9;border:0.5px solid #d3d1c7}
+.drawer-footer{margin-top:auto;padding:0 24px;font-size:11px;color:#b4b2a9;line-height:1.6}
+.app{max-width:720px;margin:0 auto;padding:1.5rem 1rem 5rem}
+.page-header{margin-bottom:1.5rem}
+.page-header h1{font-size:18px;font-weight:500;margin-bottom:3px}
+.page-header p{font-size:13px;color:#5f5e5a}
+.tabs{display:flex;border:0.5px solid #d3d1c7;border-radius:8px;overflow:hidden;margin-bottom:1.25rem;width:fit-content}
+.tab{padding:7px 18px;font-size:13px;cursor:pointer;border:none;background:transparent;color:#5f5e5a;font-family:inherit}
+.tab.active{background:#e8e7e3;color:#2c2c2a;font-weight:500}
+.tab:hover:not(.active){background:#eeedea}
+.section{display:none}.section.active{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:#5f5e5a;font-weight:500;letter-spacing:0.02em}
+.field input{width:100%;padding:8px 10px;font-size:14px;border:0.5px solid #d3d1c7;border-radius:8px;background:#fff;color:#2c2c2a;font-family:inherit}
+.field input:focus{outline:none;border-color:#888780}
+.field .unit{font-size:10px;color:#b4b2a9;margin-top:2px}
+.block{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;padding:1rem 1.25rem;margin-bottom:8px}
+.block-title{font-size:11px;font-weight:600;color:#2c2c2a;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:10px;padding-bottom:7px;border-bottom:0.5px solid #eeedea;display:flex;align-items:center;gap:7px}
+.block-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.svg-wrap{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;overflow:hidden;margin-bottom:8px}
+.slider-block{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;padding:1rem 1.25rem;margin-bottom:8px}
+.slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.slider-row span{font-size:12px;color:#5f5e5a}
+.slider-row strong{font-size:16px;font-weight:500;color:#2c2c2a}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:#d3d1c7;border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:#2c2c2a;border-radius:50%;cursor:pointer;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.18)}
+.slider-ticks{display:flex;justify-content:space-between;margin-top:5px}
+.slider-ticks span{font-size:10px;color:#b4b2a9}
+.result-outer{background:#f1efe8;border:0.5px solid #d3d1c7;border-radius:10px;padding:1rem 1.25rem;margin-bottom:8px}
+.result-outer-title{font-size:11px;color:#888780;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px}
+.result-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.res-card{background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;padding:12px 14px}
+.res-card.end{border-color:#D85A30;background:#fff8f6}
+.res-label{font-size:11px;color:#888780;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.res-val{font-size:26px;font-weight:500;color:#2c2c2a;line-height:1}
+.res-val.end-val{font-size:18px;color:#D85A30}
+.res-sub{font-size:12px;color:#5f5e5a;margin-top:4px}
+.res-bar{height:4px;border-radius:2px;margin-top:7px;transition:width 0.2s}
+.notice{font-size:12px;color:#5f5e5a;padding:9px 12px;background:#f1efe8;border-radius:8px;border-left:3px solid #d3d1c7;margin-bottom:8px;line-height:1.5}
+.notice.warn{border-left-color:#D85A30;background:#fff8f6;color:#D85A30}
+.table-wrap{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;overflow:hidden}
+.table-hdr{padding:9px 14px;background:#f5f5f3;border-bottom:0.5px solid #d3d1c7;display:flex;justify-content:space-between;align-items:center}
+.table-hdr span{font-size:11px;color:#888780;letter-spacing:0.06em;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:7px 12px;text-align:left;background:#f8f8f6;color:#888780;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;border-bottom:0.5px solid #e0ded8}
+tbody td{padding:6px 12px;border-bottom:0.5px solid #f0eeea;color:#2c2c2a}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafaf8}
+tbody tr.hl td{background:#fffdf0;font-weight:500}
+tbody tr.tr-end td{color:#b4b2a9;font-style:italic}
+.bar-cell{display:flex;align-items:center;gap:5px}
+.minibar{height:5px;border-radius:2px;min-width:1px}
+.minibar.a{background:#f0c000}
+.minibar.b{background:#1D9E75}
+.disclaimer{font-size:10px;color:#d3d1c7;letter-spacing:0.04em;line-height:1.5;padding:16px 1rem 24px;max-width:720px;margin:0 auto;display:block}
+@media(max-width:520px){.grid2,.result-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="burger-nav">
+  <button class="burger-btn" id="burgerBtn" onclick="toggleBurger()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+<div class="burger-overlay" id="burgerOverlay" onclick="toggleBurger()"></div>
+<div class="burger-drawer" id="burgerDrawer">
+  <div class="drawer-section">Navigation</div>
+  <a class="drawer-item" href="index.html">Home</a>
+  <div class="drawer-section">Tools</div>
+  <a class="drawer-item" href="ausleger_rechner_v7.html">Ausleger-Rechner <span class="drawer-badge live">Live</span></a>
+  <a class="drawer-item active" href="tandemlift_v1.html">Tandemlift-Rechner <span class="drawer-badge live">Live</span></a>
+  <div class="drawer-footer">© Manuel Widmer<br>Alle Angaben ohne Gewähr</div>
+  <a href="admin.html" style="padding:10px 24px;font-size:11px;color:#b4b2a9;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s" onmouseover="this.style.color='#888780'" onmouseout="this.style.color='#b4b2a9'">Admin</a>
+</div>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">Kran<em>Tools</em></a>
+  <span class="topbar-sep">·</span>
+  <span class="topbar-name">Tandemlift-Rechner</span>
+</div>
+
+<div class="app">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1>Tandemlift — Lastverteilung</h1>
+      <p>Zugkraft in Abhängigkeit vom Drehwinkel · Kran 1 (links) und Kran 2 (rechts)</p>
+    </div>
+    <button onclick="printPDF()" style="padding:8px 14px;border:0.5px solid #b4b2a9;border-radius:8px;background:transparent;color:#2c2c2a;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;margin-top:2px;transition:background 0.15s" onmouseover="this.style.background='#f1efe8'" onmouseout="this.style.background='transparent'">↓ PDF</button>
+  </div>
+
+  <!-- RECHNER -->
+  <div id="tab-rechner">
+
+    <!-- LAST -->
+    <div class="block">
+      <div class="block-title">
+        <div class="block-dot" style="background:#2c2c2a"></div>Last
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Länge der Last (m)</label>
+          <input type="number" id="lastL" value="14" min="0.1" step="0.1" oninput="compute()">
+        </div>
+        <div class="field">
+          <label>Höhe der Last (m)</label>
+          <input type="number" id="lastH" value="2" min="0.1" step="0.1" oninput="compute()">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Last (t)</label>
+          <input type="number" id="hublast" value="100" min="0.1" step="0.1" oninput="compute()">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SCHWERPUNKT -->
+    <div class="block">
+      <div class="block-title">
+        <div class="block-dot" style="background:#2c2c2a"></div>
+        Schwerpunkt S
+        <span style="font-size:10px;color:#b4b2a9;font-weight:400;text-transform:none;letter-spacing:0">Abstand vom Nullpunkt links/unten der Last</span>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Abstand vom linken Rand (m)</label>
+          <input type="number" id="spX" value="" min="0" step="0.1" oninput="compute()" placeholder="leer = Mitte (Länge/2)">
+        </div>
+        <div class="field">
+          <label>Abstand vom Boden (m)</label>
+          <input type="number" id="spY" value="" min="0" step="0.1" oninput="compute()" placeholder="leer = Mitte (Höhe/2)">
+        </div>
+      </div>
+    </div>
+
+    <!-- KRAN 1 + 2 -->
+    <div class="block">
+      <div class="block-title" style="margin-bottom:14px">
+        <div class="block-dot" style="background:#f0c000;border:1.5px solid #d4ab00"></div>
+        Anschlagpunkte
+      </div>
+      <div class="grid2">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:10px;font-weight:600;color:#b8940a;letter-spacing:0.08em;text-transform:uppercase;padding-bottom:4px;border-bottom:1.5px solid #f0c000">Kran 1 — links</div>
+          <div class="field">
+            <label>Abstand vom SP nach links (m)</label>
+            <input type="number" id="k1dist" value="5" min="0" step="0.1" oninput="compute()">
+          </div>
+          <div class="field">
+            <label>Vertikale Abweichung vom SP (m)</label>
+            <input type="number" id="k1vdist" value="0" step="0.1" oninput="compute()">
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:10px;font-weight:600;color:#0F6E56;letter-spacing:0.08em;text-transform:uppercase;padding-bottom:4px;border-bottom:1.5px solid #1D9E75">Kran 2 — rechts</div>
+          <div class="field">
+            <label>Abstand vom SP nach rechts (m)</label>
+            <input type="number" id="k2dist" value="4" min="0" step="0.1" oninput="compute()">
+          </div>
+          <div class="field">
+            <label>Vertikale Abweichung vom SP (m)</label>
+            <input type="number" id="k2vdist" value="0" step="0.1" oninput="compute()">
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#b4b2a9;margin-top:6px">Vertikale Abweichung: positiv = oberhalb SP · negativ = unterhalb SP</div>
+    </div>
+
+    <!-- SVG -->
+    <div class="svg-wrap">
+      <svg id="schema" viewBox="0 0 660 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block"></svg>
+    </div>
+
+
+    <!-- ZIEHENDER KRAN + WINKEL -->
+    <div class="slider-block">
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:#2c2c2a;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:8px">Welcher Kran zieht?</div>
+        <div style="display:flex;gap:6px">
+          <button id="btnK1" onclick="setZieher(1)"
+            style="flex:1;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all 0.15s;background:#f0c000;color:#2c2c2a;border:1.5px solid #d4ab00">
+            ↑ Kran 1 zieht
+          </button>
+          <button id="btnK2" onclick="setZieher(2)"
+            style="flex:1;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all 0.15s;background:#fff;color:#888780;border:1.5px solid #d3d1c7">
+            Kran 2 zieht ↑
+          </button>
+        </div>
+      </div>
+      <div class="slider-row">
+        <span id="sliderLabel">Hubfortschritt — Kran 1 zieht</span>
+        <strong id="angleDisplay">0°</strong>
+      </div>
+      <input type="range" id="angleSlider" min="0" max="89" value="0" oninput="onSlider()">
+      <div class="slider-ticks">
+        <span>0° — waagerecht</span><span>45°</span><span>89° — senkrecht</span>
+      </div>
+    </div>
+
+    <!-- ERGEBNIS AKTUELL -->
+    <div class="result-outer">
+      <div class="result-outer-title">Zugkraft bei <span id="resWinkelLabel">0°</span></div>
+      <div class="result-row">
+        <div class="res-card" id="resCard1">
+          <div class="res-label">
+            <div style="width:9px;height:9px;border-radius:50%;background:#f0c000;border:1.5px solid #d4ab00;flex-shrink:0"></div>
+            Kran 1 (links)
+          </div>
+          <div class="res-val" id="res1Val">—</div>
+          <div class="res-sub" id="res1Sub">—</div>
+          <div class="res-bar" id="res1Bar" style="background:#f0c000;width:0%"></div>
+        </div>
+        <div class="res-card" id="resCard2">
+          <div class="res-label">
+            <div style="width:9px;height:9px;border-radius:50%;background:#1D9E75;flex-shrink:0"></div>
+            Kran 2 (rechts)
+          </div>
+          <div class="res-val" id="res2Val">—</div>
+          <div class="res-sub" id="res2Sub">—</div>
+          <div class="res-bar" id="res2Bar" style="background:#1D9E75;width:0%"></div>
+        </div>
+      </div>
+      <div id="endWarn"></div>
+    </div>
+
+    <!-- MAXIMALLASTEN -->
+    <div class="result-outer">
+      <div class="result-outer-title">Maximallasten — Mindest-Tragfähigkeit</div>
+      <div class="result-row">
+        <div class="res-card">
+          <div class="res-label">
+            <div style="width:9px;height:9px;border-radius:50%;background:#f0c000;border:1.5px solid #d4ab00;flex-shrink:0"></div>
+            Kran 1 — Maximum
+          </div>
+          <div class="res-val" id="max1Val">—</div>
+          <div class="res-sub" id="max1Sub">—</div>
+        </div>
+        <div class="res-card">
+          <div class="res-label">
+            <div style="width:9px;height:9px;border-radius:50%;background:#1D9E75;flex-shrink:0"></div>
+            Kran 2 — Maximum
+          </div>
+          <div class="res-val" id="max2Val">—</div>
+          <div class="res-sub" id="max2Sub">—</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#888780;margin-top:6px">Maximalwert über alle gültigen Winkel — benötigte Mindest-Tragfähigkeit.</div>
+    </div>
+
+    <!-- WERTETABELLE -->
+    <div class="table-wrap" style="margin-top:8px">
+      <div class="table-hdr">
+        <span id="tblTitle">Wertetabelle</span>
+        <span id="tblMeta">—</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Winkel</th>
+            <th id="thK1"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#f0c000;border:1px solid #d4ab00;display:inline-block"></span>Kran 1 (t)</span></th>
+            <th id="thK2"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block"></span>Kran 2 (t)</span></th>
+            <th>Anteil 1</th>
+            <th>Anteil 2</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="disclaimer">Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</div>
+
+<script>
+function toggleBurger(){
+  ['burgerBtn','burgerOverlay','burgerDrawer'].forEach(id=>document.getElementById(id).classList.toggle('open'));
+}
+
+
+// ── Hilfsfunktionen ──────────────────────────────────────
+function vn(id){ return parseFloat(document.getElementById(id).value)||0; }
+function ve(id){ const s=document.getElementById(id).value.trim(); return s===''?null:parseFloat(s); }
+
+// ── Geometrie ermitteln ──────────────────────────────────
+// Koordinatensystem: Ursprung = Schwerpunkt S
+// Kran 1 (links): k1dist = Abstand vom linken Rand → ax = -(spX - k1dist)
+// Kran 2 (rechts): k2dist = Abstand vom rechten Rand → bx = (lastL - spX) - k2dist
+
+function getGeo(){
+  const lastL = Math.max(0.1, vn('lastL'));
+  const lastH = Math.max(0.1, vn('lastH'));
+  const Q     = Math.max(0, vn('hublast'));
+
+  // Schwerpunkt (absolute Position auf der Last)
+  const spXraw = ve('spX'); const spX = spXraw!==null ? spXraw : lastL/2;
+  const spYraw = ve('spY'); const spY = spYraw!==null ? spYraw : lastH/2;
+
+  // Anschlagpunkt Kran 1
+  // Kran 1: Abstand vom SP nach links (immer negativ in x), vertikale Abweichung vom SP
+  const k1dist  = Math.max(0, vn('k1dist'));
+  const k1vdist = vn('k1vdist');
+
+  // Kran 2: Abstand vom SP nach rechts (immer positiv in x), vertikale Abweichung vom SP
+  const k2dist  = Math.max(0, vn('k2dist'));
+  const k2vdist = vn('k2vdist');
+
+  // Koordinaten relativ zu SP — direkt
+  const ax = -k1dist;     // links → negativ
+  const ay =  k1vdist;    // vertikale Abweichung vom SP
+  const bx =  k2dist;     // rechts → positiv
+  const by =  k2vdist;    // vertikale Abweichung vom SP
+  const k1h = spY + k1vdist;  // absolute Höhe (für Bemaßung)
+  const k2h = spY + k2vdist;
+
+  return { lastL, lastH, Q, spX, spY, ax, ay, bx, by, k1h, k2h };
+}
+
+// ── Kernberechnung ───────────────────────────────────────
+// Haken hängen SENKRECHT (vertikal). Die Last dreht sich um SP.
+// Nach Rotation φ des Bauteils:
+//   AP1_rotated_x = ax·cos(φ) − ay·sin(φ)   (horizontaler Hebelarm von SP)
+//   AP2_rotated_x = bx·cos(φ) − by·sin(φ)
+//
+// Momentengleichgewicht um SP (nur vertikale Kräfte, horizontale Hebelarme):
+//   F1·Ax + F2·Bx = 0
+//   F1 + F2 = Q
+// →  F1 = Q·Bx / (Bx−Ax)
+//    F2 = Q·Ax_neg / (Bx−Ax)   [= Q−F1]
+// Wenn F1<0 oder F2<0 → "Ende"
+
+function calcAt(ax, ay, bx, by, Q, deg){
+  const phi = deg * Math.PI / 180;
+  const c = Math.cos(phi), s = Math.sin(phi);
+  const Ax = ax*c - ay*s;
+  const Bx = bx*c - by*s;
+  const D  = Bx - Ax;
+  if(Math.abs(D) < 1e-9) return null;
+  const f1 = Q * Bx / D;
+  const f2 = Q - f1;
+  return { f1, f2 };
+}
+
+// ── State ────────────────────────────────────────────────
+let curAngle = 0;   // 0..89 (Slider-Wert)
+let zieher   = 1;   // 1 = Kran 1 zieht, 2 = Kran 2 zieht
+let allRes   = [];
+
+// Intern-Winkel: Kran1 zieht → negativ (dreht zu Kran1 = links)
+//                Kran2 zieht → positiv (dreht zu Kran2 = rechts)
+function effectiveDeg(){ return zieher === 1 ? -curAngle : curAngle; }
+
+function setZieher(k){
+  zieher = k;
+  const b1=document.getElementById('btnK1'), b2=document.getElementById('btnK2');
+  if(k===1){
+    b1.style.background='#f0c000'; b1.style.color='#2c2c2a'; b1.style.borderColor='#d4ab00';
+    b2.style.background='#fff';    b2.style.color='#888780';  b2.style.borderColor='#d3d1c7';
+  } else {
+    b2.style.background='#1D9E75'; b2.style.color='#fff';     b2.style.borderColor='#0e7a5c';
+    b1.style.background='#fff';    b1.style.color='#888780';  b1.style.borderColor='#d3d1c7';
+  }
+  document.getElementById('sliderLabel').textContent =
+    k===1 ? 'Hubfortschritt — Kran 1 zieht' : 'Hubfortschritt — Kran 2 zieht';
+  const g = getGeo();
+  renderAt(effectiveDeg(), g.Q);
+  renderMax(g.Q);
+  renderTable();
+  drawSVG(g, effectiveDeg());
+}
+
+function compute(){
+  const g = getGeo();
+  allRes = [];
+  for(let w=-89; w<=89; w++){
+    allRes.push({ w, r: calcAt(g.ax, g.ay, g.bx, g.by, g.Q, w) });
+  }
+  renderAt(effectiveDeg(), g.Q);
+  renderMax(g.Q);
+  renderTable();
+  drawSVG(g, effectiveDeg());
+}
+
+function onSlider(){
+  curAngle = parseInt(document.getElementById('angleSlider').value);
+  document.getElementById('angleDisplay').textContent = curAngle+'°';
+  const g = getGeo();
+  renderAt(effectiveDeg(), g.Q);
+  drawSVG(g, effectiveDeg());
+}
+
+// ── Ergebnis anzeigen ────────────────────────────────────
+function renderAt(deg, Q){
+  document.getElementById('resWinkelLabel').textContent = Math.abs(deg)+'°';
+  const e = allRes[deg+89];
+  const r = e ? e.r : null;
+  const c1=document.getElementById('resCard1'), c2=document.getElementById('resCard2');
+  c1.className='res-card'; c2.className='res-card';
+  document.getElementById('endWarn').innerHTML='';
+
+  if(!r || r.f1<-0.01 || r.f2<-0.01){
+    ['res1Val','res2Val'].forEach(id=>{const el=document.getElementById(id);el.className='res-val end-val';el.textContent='Ende';});
+    document.getElementById('res1Sub').textContent='Zugkraft erforderlich';
+    document.getElementById('res2Sub').textContent='Zugkraft erforderlich';
+    document.getElementById('res1Bar').style.width='0%';
+    document.getElementById('res2Bar').style.width='0%';
+    c1.classList.add('end'); c2.classList.add('end');
+    document.getElementById('endWarn').innerHTML='<div class="notice warn" style="margin-top:8px">⚠ Bei diesem Winkel müsste ein Kran Zugkraft aufnehmen — geometrisch nicht zulässig.</div>';
+    return;
+  }
+  ['res1Val','res2Val'].forEach(id=>document.getElementById(id).className='res-val');
+  const p1=Q>0?r.f1/Q*100:0, p2=Q>0?r.f2/Q*100:0;
+  document.getElementById('res1Val').textContent = r.f1.toFixed(2)+' t';
+  document.getElementById('res2Val').textContent = r.f2.toFixed(2)+' t';
+  document.getElementById('res1Sub').textContent = p1.toFixed(1)+'% der Gesamtlast';
+  document.getElementById('res2Sub').textContent = p2.toFixed(1)+'% der Gesamtlast';
+  document.getElementById('res1Bar').style.width = Math.min(100,p1)+'%';
+  document.getElementById('res2Bar').style.width = Math.min(100,p2)+'%';
+}
+
+function renderMax(Q){
+  let m1=-Infinity,m2=-Infinity,w1=0,w2=0;
+  allRes.forEach(({w,r})=>{
+    // Nur den relevanten Winkelbereich auswerten
+    if(zieher===1 && w>0) return;   // Kran1 zieht: negative Winkel (0..-89)
+    if(zieher===2 && w<0) return;   // Kran2 zieht: positive Winkel (0..+89)
+    if(!r||r.f1<-0.01||r.f2<-0.01)return;
+    if(r.f1>m1){m1=r.f1;w1=w;} if(r.f2>m2){m2=r.f2;w2=w;}
+  });
+  if(m1===-Infinity){
+    ['max1Val','max2Val'].forEach(id=>document.getElementById(id).textContent='—');
+    ['max1Sub','max2Sub'].forEach(id=>document.getElementById(id).textContent='Kein gültiger Bereich');
+    return;
+  }
+  document.getElementById('max1Val').textContent = m1.toFixed(2)+' t';
+  document.getElementById('max2Val').textContent = m2.toFixed(2)+' t';
+  document.getElementById('max1Sub').textContent = `bei ${w1}° · ${(m1/Q*100).toFixed(1)}% von Last`;
+  document.getElementById('max2Sub').textContent = `bei ${w2}° · ${(m2/Q*100).toFixed(1)}% von Last`;
+}
+
+// ── Tabelle ──────────────────────────────────────────────
+function renderTable(){
+  const g=getGeo();
+  const ziehtName = zieher===1 ? 'Kran 1 zieht' : 'Kran 2 zieht';
+  document.getElementById('tblMeta').textContent=g.Q.toFixed(2)+' t · '+ziehtName;
+  document.getElementById('tblTitle').textContent='Wertetabelle — '+ziehtName;
+  // Spaltenheader: ziehender Kran hervorheben
+  document.getElementById('thK1').innerHTML='<span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#f0c000;border:1px solid #d4ab00;display:inline-block"></span>Kran 1 (t)'+(zieher===1?' ↑':'')+'</span>';
+  document.getElementById('thK2').innerHTML='<span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block"></span>Kran 2 (t)'+(zieher===2?' ↑':'')+'</span>';
+  const tb=document.getElementById('tableBody'); tb.innerHTML='';
+  // Winkelbereich je nach zieher: K1 → 0,-5,-10...-89 | K2 → 0,5,10...89
+  const angles=[];
+  for(let a=0;a<=89;a+=5) angles.push(zieher===1 ? -a : a);
+  angles.forEach(w=>{
+    const e=allRes[w+89]; const r=e?e.r:null;
+    const tr=document.createElement('tr');
+    const isEnd=!r||r.f1<-0.01||r.f2<-0.01;
+    if(isEnd) tr.className='tr-end';
+    if(w===effectiveDeg()) tr.classList.add('hl');
+    const displayAngle = Math.abs(w)+'°';
+    if(isEnd){
+      tr.innerHTML=`<td>${displayAngle}</td><td colspan="4" style="color:#b4b2a9;font-style:italic">Ende — Zugkraft erforderlich</td>`;
+    } else {
+      const Q=g.Q,p1=Q>0?r.f1/Q*100:0,p2=Q>0?r.f2/Q*100:0;
+      const b1=Math.round(p1*0.65),b2=Math.round(p2*0.65);
+      tr.innerHTML=`<td>${displayAngle}</td><td>${r.f1.toFixed(2)}</td><td>${r.f2.toFixed(2)}</td>
+        <td><div class="bar-cell"><div class="minibar a" style="width:${b1}px"></div><span style="font-size:12px">${p1.toFixed(1)}%</span></div></td>
+        <td><div class="bar-cell"><div class="minibar b" style="width:${b2}px"></div><span style="font-size:12px">${p2.toFixed(1)}%</span></div></td>`;
+    }
+    tb.appendChild(tr);
+  });
+}
+
+// ── SVG Zeichnung ─────────────────────────────────────────
+function drawSVG(g, deg){
+  const svg = document.getElementById('schema');
+  svg.innerHTML='';
+  const W=660, H=520;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const { lastL, lastH, Q, spX, spY, ax, ay, bx, by, k1h, k2h } = g;
+  const phi = deg * Math.PI/180;
+  const C=Math.cos(phi), S=Math.sin(phi);
+
+  // SVG helpers
+  function el(tag,a={},txt=''){
+    const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    for(const [k,v] of Object.entries(a)) e.setAttribute(k,v);
+    if(txt) e.textContent=txt; return e;
+  }
+  const app=(e)=>svg.appendChild(e);
+  const line=(x1,y1,x2,y2,stroke='#d3d1c7',sw=1,dash='')=>
+    app(el('line',{x1,y1,x2,y2,stroke,'stroke-width':sw,'stroke-dasharray':dash}));
+  const circ=(cx,cy,r,fill,stroke='none',sw=0)=>
+    app(el('circle',{cx,cy,r,fill,stroke,'stroke-width':sw}));
+  const text=(x,y,t,anchor='start',fill='#888780',fs=10)=>
+    app(el('text',{x,y,'text-anchor':anchor,fill,'font-size':fs,'font-family':'system-ui,sans-serif'},t));
+
+  // Defs
+  const defs=el('defs');
+  // Pfeilmarker Schwerkraft
+  const mG=el('marker',{id:'mG',markerWidth:7,markerHeight:7,refX:3.5,refY:3.5,orient:'auto'});
+  mG.appendChild(el('path',{d:'M1,1 L6,3.5 L1,6 Z',fill:'#5f5e5a'})); defs.appendChild(mG);
+  // Pfeilmarker Kran1
+  const mA=el('marker',{id:'mA',markerWidth:7,markerHeight:7,refX:3.5,refY:3.5,orient:'auto'});
+  mA.appendChild(el('path',{d:'M1,1 L6,3.5 L1,6 Z',fill:'#d4ab00'})); defs.appendChild(mA);
+  // Pfeilmarker Kran2
+  const mB=el('marker',{id:'mB',markerWidth:7,markerHeight:7,refX:3.5,refY:3.5,orient:'auto'});
+  mB.appendChild(el('path',{d:'M1,1 L6,3.5 L1,6 Z',fill:'#0e7a5c'})); defs.appendChild(mB);
+  app(defs);
+
+  // ── Skala: alles passt in fixen Canvas W×H ──
+  const seilH_m = 4.0;
+  const pad_m   = 2.5; // Rand in Metern
+
+  const pivotLocal = zieher===1 ? [bx, by] : [ax, ay];
+  const pullLocal  = zieher===1 ? [ax, ay] : [bx, by];
+  const [plx, ply] = pivotLocal;
+  const [pullLx, pullLy] = pullLocal;
+
+  function rotPt(lx, ly){ return [lx*C - ly*S, lx*S + ly*C]; }
+  const [pivRx, pivRy] = rotPt(plx, ply);
+  const [pullRx, pullRy] = rotPt(pullLx, pullLy);
+
+  // Alle relevanten Punkte in Welt-Koordinaten (Ursprung SP, y nach oben)
+  const wPts = [
+    ...[ [-spX,-(lastH-spY)],[lastL-spX,-(lastH-spY)],[lastL-spX,spY],[-spX,spY] ]
+      .map(([lx,ly])=>rotPt(lx,ly)),
+    [pivRx, pivRy + seilH_m],   // haltender Haken
+    [pullRx, pullRy + seilH_m], // ziehender Haken
+    [pullRx, pullRy + seilH_m + 3.0], // Kraftpfeil-Spitze
+    [pivRx,  pivRy + seilH_m + 3.0],
+  ];
+  const wxs = wPts.map(([x])=>x), wys = wPts.map(([,y])=>y);
+  const minWx=Math.min(...wxs)-pad_m, maxWx=Math.max(...wxs)+pad_m;
+  const minWy=Math.min(...wys)-pad_m, maxWy=Math.max(...wys)+pad_m;
+
+  // Skala so dass alles in W×H passt
+  const sc = Math.min(W/(maxWx-minWx), H/(maxWy-minWy));
+
+  // Welt → SVG
+  function toSVG(lx, ly){
+    const rx = lx*C - ly*S;
+    const ry = lx*S + ly*C;
+    return [(rx-minWx)*sc, (maxWy-ry)*sc];
+  }
+
+  const spSx = (0-minWx)*sc, spSy = (maxWy-0)*sc;
+  const [ap1x,ap1y] = toSVG(ax,ay);
+  const [ap2x,ap2y] = toSVG(bx,by);
+  const [pullSVGx,pullSVGy] = toSVG(pullLx,pullLy);
+
+  const seilH_px = seilH_m*sc;
+  const holdHakenX = (pivRx-minWx)*sc;
+  const holdHakenY = (maxWy-(pivRy+seilH_m))*sc;
+  const pullHakenX = (pullRx-minWx)*sc;
+  const pullHakenY = (maxWy-(pullRy+seilH_m))*sc;
+
+  // BG
+  app(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
+
+  // ── Boden ──
+  const groundY = H-18;
+  line(20, groundY, W-20, groundY, '#e0ded8', 0.8, '3,4');
+
+  // ── Anschlagpunkte (bereits berechnet oben) ──
+
+  // Haken-Referenzen (bereits oben berechnet)
+  const seilH = seilH_m * sc; // nur für hakH-Offset nötig
+
+  // Ziehender/Haltender AP
+  const pullAp  = zieher===1 ? [ap1x,ap1y] : [ap2x,ap2y];
+  const holdAp  = zieher===1 ? [ap2x,ap2y] : [ap1x,ap1y];
+  const [pullApX, pullApY] = pullAp;
+  const [holdApX, holdApY] = holdAp;
+
+  // ── Vertikale Strichlinie vom haltenden AP nach oben ──
+  line(holdHakenX, holdHakenY-14, holdHakenX, holdApY, zieher===1?'#0e7a5c':'#d4ab00', 0.8, '3,3');
+
+  // ── Last-Rechteck ──
+  const corners = [
+    [-spX,       -(lastH-spY)],
+    [lastL-spX,  -(lastH-spY)],
+    [lastL-spX,   spY        ],
+    [-spX,        spY        ],
+  ].map(([lx,ly])=>toSVG(lx,ly));
+  const pts = corners.map(([x,y])=>`${x},${y}`).join(' ');
+
+  const clip=el('clipPath',{id:'lclip'});
+  clip.appendChild(el('polygon',{points:pts}));
+  defs.appendChild(clip);
+  const hg=el('g',{'clip-path':'url(#lclip)'});
+  for(let i=-W;i<W*2;i+=12)
+    hg.appendChild(el('line',{x1:i,y1:0,x2:i-H,y2:H,stroke:'#ebebea','stroke-width':0.7}));
+  app(hg);
+  app(el('polygon',{points:pts,fill:'rgba(245,245,243,0.8)',stroke:'none'}));
+  app(el('polygon',{points:pts,fill:'none',stroke:'#2c2c2a','stroke-width':1.5}));
+
+  // ── Schwerpunkt S ──
+  circ(spSx, spSy, 4, '#2c2c2a');
+  line(spSx-8, spSy, spSx+8, spSy, '#2c2c2a', 1);
+  line(spSx, spSy-8, spSx, spSy+8, '#2c2c2a', 1);
+
+
+  // Schwerkraftpfeil
+  app(el('line',{x1:spSx,y1:spSy+6,x2:spSx,y2:spSy+30,stroke:'#5f5e5a','stroke-width':1.5,'marker-end':'url(#mG)'}));
+  text(spSx+4, spSy+32, 'G', 'start', '#5f5e5a', 10);
+
+  // ── Seile ──
+  // Haltender Kran: Seil vertikal, AP fix
+  const holdCol = zieher===1 ? '#0e7a5c' : '#d4ab00';
+  const pullCol = zieher===1 ? '#d4ab00' : '#0e7a5c';
+  app(el('line',{x1:holdHakenX,y1:holdApY,x2:holdHakenX,y2:holdHakenY,stroke:holdCol,'stroke-width':1.8}));
+  // Ziehender Kran: Seil vertikal über AP (AP bewegt sich mit Last)
+  app(el('line',{x1:pullHakenX,y1:pullApY,x2:pullHakenX,y2:pullHakenY,stroke:pullCol,'stroke-width':1.8}));
+
+  // ── Haken-Symbole ──
+  const hakW=9, hakH=12;
+  // Haltender Haken (fix)
+  const holdFill = zieher===1 ? '#1D9E75' : '#f0c000';
+  const holdStroke = zieher===1 ? '#0e7a5c' : '#d4ab00';
+  app(el('polygon',{
+    points:`${holdHakenX-hakW},${holdHakenY} ${holdHakenX+hakW},${holdHakenY} ${holdHakenX},${holdHakenY-hakH}`,
+    fill:holdFill,stroke:holdStroke,'stroke-width':1
+  }));
+  // Ziehender Haken (bewegt sich mit AP)
+  const pullFill = zieher===1 ? '#f0c000' : '#1D9E75';
+  const pullStroke = zieher===1 ? '#d4ab00' : '#0e7a5c';
+  app(el('polygon',{
+    points:`${pullHakenX-hakW},${pullHakenY} ${pullHakenX+hakW},${pullHakenY} ${pullHakenX},${pullHakenY-hakH}`,
+    fill:pullFill,stroke:pullStroke,'stroke-width':1
+  }));
+
+  // ── Anschlagpunkt-Kreise ──
+  circ(ap1x, ap1y, 5, '#f0c000', '#d4ab00', 1.5);
+  circ(ap2x, ap2y, 5, '#1D9E75', '#0e7a5c', 1.5);
+
+  // h1y/h2y = Haken-Unterkante je Kran
+  const h1y = zieher===1 ? pullHakenY : holdHakenY;
+  const h2y = zieher===1 ? holdHakenY : pullHakenY;
+
+  // ── Kraftpfeile ──
+  const entry = allRes[deg+89];
+  const res   = entry ? entry.r : null;
+  if(res && res.f1>=-0.01 && res.f2>=-0.01 && Q>0){
+    const maxF = Math.max(res.f1, res.f2, 0.01);
+    const pxMax = 34;
+    const arr1 = Math.max(8, res.f1/maxF * pxMax);
+    const arr2 = Math.max(8, res.f2/maxF * pxMax);
+    // Kran 1
+    const a1y0 = h1y-hakH-4, a1y1 = a1y0-arr1;
+    app(el('line',{x1:ap1x,y1:h1y-hakH-4,x2:ap1x,y2:a1y1,stroke:'#f0c000','stroke-width':2.5,'marker-end':'url(#mA)'}));
+    app(el('rect',{x:ap1x-27,y:a1y1-19,width:54,height:14,rx:3,fill:'#fffdf0',stroke:'#f0c000','stroke-width':0.7}));
+    text(ap1x, a1y1-9, res.f1.toFixed(1)+' t','middle','#b8940a',10);
+    // Kran 2
+    const a2y0 = h2y-hakH-4, a2y1 = a2y0-arr2;
+    app(el('line',{x1:ap2x,y1:h2y-hakH-4,x2:ap2x,y2:a2y1,stroke:'#1D9E75','stroke-width':2.5,'marker-end':'url(#mB)'}));
+    app(el('rect',{x:ap2x-27,y:a2y1-19,width:54,height:14,rx:3,fill:'#f0fdf8',stroke:'#1D9E75','stroke-width':0.7}));
+    text(ap2x, a2y1-9, res.f2.toFixed(1)+' t','middle','#0F6E56',10);
+  }
+
+  // ── Kran-Labels ──
+  const lbl1y = Math.min(h1y, ap1y) - hakH - 16;
+  const lbl2y = Math.min(h2y, ap2y) - hakH - 16;
+  text(ap1x, lbl1y, zieher===1 ? '↑ Kran 1' : 'Kran 1', 'middle', zieher===1?'#b8940a':'#c4c2b9', zieher===1?12:11);
+  text(ap2x, lbl2y, zieher===2 ? 'Kran 2 ↑' : 'Kran 2', 'middle', zieher===2?'#0F6E56':'#c4c2b9', zieher===2?12:11);
+
+  // ── Bemaßung bei 0° ──
+  if(Math.abs(deg) < 8){
+    // Linke/rechte Rand-Positionen im SVG (rotierte Last-Ecken)
+    const [edgeLx, edgeLy] = toSVG(-spX, 0);          // linker Rand auf SP-Höhe
+    const [edgeRx, edgeRy] = toSVG(lastL-spX, 0);     // rechter Rand auf SP-Höhe
+
+    const dimY  = Math.max(ap1y, ap2y, spSy) + 20;    // Eine Linie für alle
+
+    // SP → AP1 (grau, Text oben)
+    line(ap1x, dimY, spSx, dimY, '#d3d1c7', 0.8);
+    line(ap1x, dimY-4, ap1x, dimY+4, '#d3d1c7', 0.8);
+    line(spSx, dimY-4, spSx, dimY+4, '#d3d1c7', 0.8);
+    text((ap1x+spSx)/2, dimY-5, vn('k1dist').toFixed(1)+' m','middle','#b4b2a9',9);
+
+    // SP → AP2 (grau, Text oben)
+    line(spSx, dimY, ap2x, dimY, '#d3d1c7', 0.8);
+    line(ap2x, dimY-4, ap2x, dimY+4, '#d3d1c7', 0.8);
+    text((spSx+ap2x)/2, dimY-5, vn('k2dist').toFixed(1)+' m','middle','#b4b2a9',9);
+
+    // Rand → AP1 (gelb, Text unten — gleiche Linie)
+    line(edgeLx, dimY, ap1x, dimY, '#f0c000', 0.8);
+    line(edgeLx, dimY-4, edgeLx, dimY+4, '#f0c000', 0.8);
+    const distL = (spX - vn('k1dist'));
+    text((edgeLx+ap1x)/2, dimY+10, distL.toFixed(1)+' m ab links','middle','#d4ab00',8.5);
+
+    // AP2 → Rand (grün, Text unten — gleiche Linie)
+    line(ap2x, dimY, edgeRx, dimY, '#1D9E75', 0.8);
+    line(edgeRx, dimY-4, edgeRx, dimY+4, '#1D9E75', 0.8);
+    const distR = ((lastL-spX) - vn('k2dist'));
+    text((ap2x+edgeRx)/2, dimY+10, distR.toFixed(1)+' m ab rechts','middle','#0e7a5c',8.5);
+  }
+
+  // ── Winkel-Anzeige ──
+  text(W/2, H-5, `Hubwinkel: ${Math.abs(deg)}°  ·  Last: ${lastL}×${lastH} m  ·  Q: ${Q.toFixed(1)} t`, 'middle','#c4c2b9', 9);
+}
+
+// ── PDF Export ───────────────────────────────────────────
+function printPDF(){
+  const g = getGeo();
+  const { lastL, lastH, Q, spX, spY, ax, ay, bx, by } = g;
+  const ziehtName = zieher===1 ? 'Kran 1' : 'Kran 2';
+
+  // ── Eingabewerte ──
+  const td  = 'padding:4px 8px;border-bottom:0.5px solid #eee;font-size:10px;';
+  const tdL = td+'color:#888;width:25%';
+  const tdV = td+'font-weight:500;width:25%';
+  const pairs = [
+    ['Länge der Last',          lastL.toFixed(2)+' m',     'Höhe der Last',               lastH.toFixed(2)+' m'],
+    ['Hublast',                 Q.toFixed(2)+' t',         'Ziehender Kran',               ziehtName],
+    ['SP ab linkem Rand',       spX.toFixed(2)+' m',       'SP ab Boden',                  spY.toFixed(2)+' m'],
+    ['Kran 1 — Abstand SP',     Math.abs(ax).toFixed(2)+' m links', 'Kran 1 — vert. Abw. SP', ay.toFixed(2)+' m'],
+    ['Kran 2 — Abstand SP',     Math.abs(bx).toFixed(2)+' m rechts','Kran 2 — vert. Abw. SP', by.toFixed(2)+' m'],
+  ];
+  const tableRows = pairs.map(([l1,v1,l2,v2])=>`
+    <tr><td style="${tdL}">${l1}</td><td style="${tdV}">${v1}</td>
+        <td style="${tdL}">${l2}</td><td style="${tdV}">${v2}</td></tr>`).join('');
+
+  // ── Wertetabelle 10°-Raster ──
+  const th = 'padding:4px 6px;background:#f5f5f3;font-size:9px;color:#888;font-weight:500;text-align:left;border-bottom:0.5px solid #ddd;';
+  const tc = (v,bold)=>`padding:3px 6px;font-size:9px;border-bottom:0.5px solid #f0f0f0;${bold?'font-weight:500':''}`;
+  let tblRows = '';
+  for(let a=0;a<=89;a+=10){
+    const w = zieher===1 ? -a : a;
+    const idx = w+89;
+    const e = allRes[idx]; const r = e ? e.r : null;
+    const isEnd = !r || r.f1<-0.01 || r.f2<-0.01;
+    const isCur = w === effectiveDeg();
+    const bg = isCur ? 'background:#fffdf0;' : '';
+    if(isEnd){
+      tblRows+=`<tr style="${bg}"><td style="${tc(0,isCur)}">${a}°</td><td colspan="4" style="${tc(0,false)}color:#bbb;font-style:italic">Ende</td></tr>`;
+    } else {
+      const p1=Q>0?r.f1/Q*100:0, p2=Q>0?r.f2/Q*100:0;
+      tblRows+=`<tr style="${bg}">
+        <td style="${tc(0,isCur)}">${a}°</td>
+        <td style="${tc(0,isCur)}">${r.f1.toFixed(2)}</td>
+        <td style="${tc(0,isCur)}">${r.f2.toFixed(2)}</td>
+        <td style="${tc(0,isCur)}">${p1.toFixed(1)}%</td>
+        <td style="${tc(0,isCur)}">${p2.toFixed(1)}%</td>
+      </tr>`;
+    }
+  }
+
+  // ── Comic: SVG-Snapshots bei 0°,10°,...,80° ──
+  const comicAngles = [0,30,60,89];
+  const comicSVGs = comicAngles.map(a => {
+    const w = zieher===1 ? -a : a;
+    drawSVG(g, w);
+    const svgEl = document.getElementById('schema');
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute('width','100%');
+    clone.setAttribute('style','display:block;width:100%;height:auto');
+    // Winkel-Label unten einfügen
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x','50%'); lbl.setAttribute('y','98%');
+    lbl.setAttribute('text-anchor','middle');
+    lbl.setAttribute('font-size','18'); lbl.setAttribute('fill','#b4b2a9');
+    lbl.setAttribute('font-family','system-ui,sans-serif');
+    lbl.textContent = a+'°';
+    clone.appendChild(lbl);
+    return clone.outerHTML;
+  });
+
+  // Restore current angle
+  drawSVG(g, effectiveDeg());
+
+  // Comic-Grid: 3 pro Zeile
+  let comicGrid = '';
+  for(let i=0;i<comicSVGs.length;i+=2){
+    comicGrid += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">';
+    for(let j=i;j<Math.min(i+2,comicSVGs.length);j++){
+      comicGrid += `<div style="border:0.5px solid #e0ded8;border-radius:4px;overflow:hidden">${comicSVGs[j]}</div>`;
+    }
+    comicGrid += '</div>';
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8">
+<title>Tandemlift — Lastverteilung</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;color:#2c2c2a;padding:12mm;background:#fff}
+  @page{margin:10mm;size:A4 portrait}
+  @media print{body{padding:0}button{display:none}}
+  h1{font-size:15px;font-weight:600;margin-bottom:2px}
+  .logo{font-family:serif;font-size:20px;font-weight:700;letter-spacing:0.04em;margin-bottom:8px}
+  .logo em{color:#f0c000;font-style:normal}
+  .section{font-size:9px;font-weight:600;color:#888;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.06em;border-bottom:0.5px solid #eee;padding-bottom:2px}
+  table{width:100%;border-collapse:collapse}
+  .disclaimer{font-size:8px;color:#bbb;margin-top:14px;line-height:1.5}
+</style>
+</head><body>
+
+  <div class="logo">Kran<em>Tools</em></div>
+  <h1>Tandemlift — Lastverteilung</h1>
+  <div style="font-size:10px;color:#888;margin-bottom:10px">${ziehtName} zieht · Hublast: ${Q.toFixed(2)} t</div>
+
+  <div class="section">Eingabewerte</div>
+  <table>${tableRows}</table>
+
+  <div class="section">Zugkräfte — 10°-Raster</div>
+  <table>
+    <thead><tr>
+      <th style="${th}">Winkel</th>
+      <th style="${th}">Kran 1 (t)</th>
+      <th style="${th}">Kran 2 (t)</th>
+      <th style="${th}">Anteil 1</th>
+      <th style="${th}">Anteil 2</th>
+    </tr></thead>
+    <tbody>${tblRows}</tbody>
+  </table>
+
+  <div class="section" style="margin-top:12px">Hubvorgang — Schrittdarstellung (10°)</div>
+  ${comicGrid}
+
+  <div class="disclaimer">Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</div>
+
+  <script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── Init ─────────────────────────────────────────────────
+compute();
+</script>
+</body>
+</html>
