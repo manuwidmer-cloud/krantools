@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schwebeballast Interpolation — KranTools</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#2c2c2a;min-height:100vh}
+
+/* TOPBAR */
+.topbar{border-bottom:0.5px solid #d3d1c7;padding:0 20px;display:flex;align-items:center;gap:16px;height:48px;background:#fff;position:sticky;top:0;z-index:50}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.04em;color:#2c2c2a;text-decoration:none;line-height:1}
+.topbar-logo em{color:#f0c000;font-style:normal}
+.topbar-sep{color:#d3d1c7;font-size:16px}
+.topbar-name{font-size:13px;color:#888780}
+
+/* BURGER */
+.burger-nav{position:fixed;top:6px;right:14px;z-index:1000}
+.burger-btn{width:38px;height:38px;background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0;transition:background 0.15s}
+.burger-btn:hover{background:#f1efe8}
+.burger-btn span{display:block;width:15px;height:1.5px;background:#2c2c2a;border-radius:2px;transition:all 0.2s}
+.burger-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger-btn.open span:nth-child(2){opacity:0}
+.burger-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger-overlay{display:none;position:fixed;inset:0;background:rgba(44,44,42,0.18);z-index:990;backdrop-filter:blur(2px)}
+.burger-overlay.open{display:block}
+.burger-drawer{position:fixed;top:0;right:-280px;width:260px;height:100%;background:#fff;border-left:0.5px solid #d3d1c7;z-index:995;padding:64px 0 32px;transition:right 0.25s cubic-bezier(0.25,0.8,0.25,1);display:flex;flex-direction:column}
+.burger-drawer.open{right:0}
+.drawer-section{font-size:10px;color:#b4b2a9;letter-spacing:0.14em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.drawer-section:first-child{margin-top:0}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;font-size:14px;color:#2c2c2a;text-decoration:none;transition:background 0.12s}
+.drawer-item:hover{background:#f5f5f3}
+.drawer-item.active{font-weight:500}
+.drawer-item.soon{color:#b4b2a9;cursor:default}
+.drawer-item.soon:hover{background:transparent}
+.drawer-badge{font-size:9px;padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase}
+.drawer-badge.live{background:#E1F5EE;color:#0F6E56;border:0.5px solid #1D9E75}
+.drawer-badge.soon{background:#f1efe8;color:#b4b2a9;border:0.5px solid #d3d1c7}
+.drawer-footer{margin-top:auto;padding:0 24px;font-size:11px;color:#b4b2a9;line-height:1.6}
+
+/* APP */
+.app{max-width:520px;margin:0 auto;padding:2rem 1rem 5rem}
+.page-header{margin-bottom:1.5rem}
+.page-header h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:0.04em;margin-bottom:3px}
+.page-header p{font-size:13px;color:#5f5e5a}
+
+.card{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#888780;margin-bottom:1rem;padding-bottom:8px;border-bottom:0.5px solid #eeedea}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:#5f5e5a;font-weight:500}
+.field input{width:100%;padding:9px 10px;font-size:15px;border:0.5px solid #d3d1c7;border-radius:8px;background:#fff;color:#2c2c2a;font-family:inherit;transition:border-color 0.15s;font-variant-numeric:tabular-nums}
+.field input:focus{outline:none;border-color:#888780}
+.field .hint{font-size:10px;color:#b4b2a9;margin-top:2px}
+.unit{font-size:11px;color:#b4b2a9;margin-top:2px}
+
+/* DIVIDER */
+.sep{height:0.5px;background:#eeedea;margin:12px 0}
+
+/* RESULT */
+.result-block{background:#f1efe8;border:0.5px solid #d3d1c7;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.result-label{font-size:11px;color:#888780;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px}
+.result-val{font-size:64px;font-family:'Bebas Neue',sans-serif;letter-spacing:0.02em;color:#2c2c2a;line-height:1}
+.result-unit{font-size:28px;color:#888780;font-family:system-ui,sans-serif;font-weight:300;margin-left:4px}
+.result-sub{font-size:12px;color:#888780;margin-top:4px}
+.result-formula{font-size:11px;color:#b4b2a9;margin-top:8px;padding-top:8px;border-top:0.5px solid #d3d1c7;font-family:monospace;line-height:1.6}
+
+/* WARN */
+.warn{display:none;font-size:12px;color:#D85A30;padding:9px 12px;background:#fff8f6;border-radius:8px;border-left:3px solid #D85A30;margin-bottom:10px}
+.warn.visible{display:block}
+
+/* BAR */
+.bar-wrap{margin-top:12px}
+.bar-label-row{display:flex;justify-content:space-between;font-size:10px;color:#b4b2a9;margin-bottom:4px}
+.bar-track{height:8px;background:#eeedea;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:#f0c000;border-radius:4px;transition:width 0.3s cubic-bezier(0.25,0.8,0.25,1)}
+
+.disclaimer{font-size:10px;color:#d3d1c7;letter-spacing:0.04em;line-height:1.5;padding:8px 1rem 24px;max-width:520px;margin:0 auto;display:block;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- BURGER -->
+<div class="burger-nav">
+  <button class="burger-btn" id="burgerBtn" onclick="toggleBurger()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+<div class="burger-overlay" id="burgerOverlay" onclick="toggleBurger()"></div>
+<div class="burger-drawer" id="burgerDrawer">
+  <div class="drawer-section">Navigation</div>
+  <a class="drawer-item" href="index.html">Home</a>
+  <div class="drawer-section">Tools</div>
+  <a class="drawer-item" href="ausleger_rechner_v7.html">Ausleger-Rechner <span class="drawer-badge live">Live</span></a>
+  <a class="drawer-item" href="tandemlift_v1.html">Tandemlift-Rechner <span class="drawer-badge live">Live</span></a>
+  <a class="drawer-item active" href="schwebeballast_v1.html">Schwebeballast <span class="drawer-badge live">Live</span></a>
+  <a class="drawer-item soon">Nutzlastrechner <span class="drawer-badge soon">Bald</span></a>
+  <a class="drawer-item soon">Achslastrechner <span class="drawer-badge soon">Bald</span></a>
+  <a class="drawer-item soon">Anschlagmittel <span class="drawer-badge soon">Bald</span></a>
+  <div class="drawer-footer">© Manuel Widmer<br>Alle Angaben ohne Gewähr</div>
+  <a href="admin.html" style="padding:10px 24px;font-size:11px;color:#b4b2a9;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase" onmouseover="this.style.color='#888780'" onmouseout="this.style.color='#b4b2a9'">Admin</a>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">Kran<em>Tools</em></a>
+  <span class="topbar-sep">·</span>
+  <span class="topbar-name">Schwebeballast Interpolation</span>
+</div>
+
+<div class="app">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1>Raupenkran Schwebeballast</h1>
+      <p>Zwischenwerte für Schwebeballast-Gegengewicht per linearer Interpolation berechnen</p>
+    </div>
+    <button onclick="printPDF()" style="padding:8px 14px;border:0.5px solid #b4b2a9;border-radius:8px;background:transparent;color:#2c2c2a;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;margin-top:2px;transition:background 0.15s" onmouseover="this.style.background='#f1efe8'" onmouseout="this.style.background='transparent'">↓ PDF</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-block">
+    <div class="result-label">Interpolierter Schwebeballast SL</div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <span class="result-val" id="resVal">—</span>
+      <span class="result-unit" id="resUnit"></span>
+    </div>
+    <div class="result-sub" id="resSub">Bitte alle Werte eingeben</div>
+    <div class="result-formula" id="resFormula" style="display:none"></div>
+  </div>
+
+  <!-- WARN -->
+  <div class="warn" id="warnBox"></div>
+
+  <!-- INPUTS -->
+  <div class="card">
+    <div class="card-title">Tatsächliche Traglast</div>
+    <div class="field">
+      <label>L — Tatsächliche Traglast (t)</label>
+      <input type="number" id="L" placeholder="z.B. 220" step="0.1" oninput="calc()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tabellenwerte aus Traglasttabelle</div>
+    <div class="grid2">
+      <div class="field">
+        <label>L1 — Leichtere Traglast (t)</label>
+        <input type="number" id="L1" placeholder="z.B. 203" step="0.1" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>L2 — Schwerere Traglast (t)</label>
+        <input type="number" id="L2" placeholder="z.B. 247" step="0.1" oninput="calc()">
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="grid2">
+      <div class="field">
+        <label>SL1 — Schwebeballast bei L1 (t)</label>
+        <input type="number" id="SL1" placeholder="z.B. 100" step="0.1" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>SL2 — Schwebeballast bei L2 (t)</label>
+        <input type="number" id="SL2" placeholder="z.B. 150" step="0.1" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<span class="disclaimer">Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</span>
+
+<script>
+function v(id){ return parseFloat(document.getElementById(id).value); }
+
+function calc(){
+  const L  = v('L'),  L1 = v('L1'), L2 = v('L2');
+  const SL1= v('SL1'),SL2= v('SL2');
+
+  const resVal     = document.getElementById('resVal');
+  const resUnit    = document.getElementById('resUnit');
+  const resSub     = document.getElementById('resSub');
+  const resFormula = document.getElementById('resFormula');
+  const warnBox    = document.getElementById('warnBox');
+
+  // Reset warn
+  warnBox.classList.remove('visible');
+  warnBox.textContent = '';
+
+  // Check all inputs filled
+  if([L,L1,L2,SL1,SL2].some(isNaN)){
+    resVal.textContent = '—';
+    resUnit.textContent = '';
+    resSub.textContent = 'Bitte alle Werte eingeben';
+    resFormula.style.display = 'none';
+    return;
+  }
+
+  // Validierungen
+  if(L2 <= L1){
+    warnBox.textContent = 'L2 muss grösser als L1 sein.';
+    warnBox.classList.add('visible');
+    resVal.textContent = '—'; resUnit.textContent = '';
+    resSub.textContent = 'Ungültige Eingabe';
+    resFormula.style.display = 'none';
+    return;
+  }
+
+  if(L < L1 || L > L2){
+    warnBox.textContent = `Achtung: L (${L} t) liegt ausserhalb des Interpolationsbereichs [${L1} t – ${L2} t]. Ergebnis ist eine Extrapolation.`;
+    warnBox.classList.add('visible');
+  }
+
+  // Interpolation
+  const SL = SL1 + (L - L1) / (L2 - L1) * (SL2 - SL1);
+  const SLrounded = Math.round(SL);
+
+  resVal.textContent = SLrounded;
+  resUnit.textContent = 't';
+  resSub.textContent = `Exakt: ${SL.toFixed(2)} t · interpoliert zwischen SL1 = ${SL1} t und SL2 = ${SL2} t`;
+
+  resFormula.style.display = 'block';
+  resFormula.innerHTML =
+    `SL = SL1 + (L − L1) / (L2 − L1) × (SL2 − SL1)<br>` +
+    `SL = ${SL1} + (${L} − ${L1}) / (${L2} − ${L1}) × (${SL2} − ${SL1})<br>` +
+    `SL = <strong>${SL.toFixed(2)} t ≈ ${SLrounded} t</strong>`;
+}
+
+function printPDF(){
+  const L   = parseFloat(document.getElementById('L').value);
+  const L1  = parseFloat(document.getElementById('L1').value);
+  const L2  = parseFloat(document.getElementById('L2').value);
+  const SL1 = parseFloat(document.getElementById('SL1').value);
+  const SL2 = parseFloat(document.getElementById('SL2').value);
+
+  if([L,L1,L2,SL1,SL2].some(isNaN)){
+    alert('Bitte zuerst alle Werte eingeben.'); return;
+  }
+
+  function interpSL(lVal){
+    return SL1 + (lVal - L1) / (L2 - L1) * (SL2 - SL1);
+  }
+
+  // Tabelle: 10t-Schritte von L1 bis L2, plus L als eigene Zeile falls nicht auf 10t-Schritt
+  const rows = [];
+  let lVal = L1;
+  while(lVal <= L2 + 0.001){
+    const sl  = interpSL(lVal);
+    rows.push({ lVal: parseFloat(lVal.toFixed(1)), sl, slR: Math.round(sl), isCurrent: false });
+    lVal = parseFloat((lVal + 10).toFixed(1));
+  }
+  // Sicherstellen dass L2 drin ist
+  if(Math.abs(rows[rows.length-1].lVal - L2) > 0.001){
+    rows.push({ lVal: L2, sl: SL2, slR: Math.round(SL2), isCurrent: false });
+  }
+  // L einfügen falls nicht bereits auf einem 10t-Schritt
+  const exactMatch = rows.find(r => Math.abs(r.lVal - L) < 0.001);
+  if(exactMatch){
+    exactMatch.isCurrent = true;
+  } else {
+    const sl  = interpSL(L);
+    rows.push({ lVal: L, sl, slR: Math.round(sl), isCurrent: true });
+    rows.sort((a,b) => a.lVal - b.lVal);
+  }
+
+  const SL      = interpSL(L);
+  const SLround = Math.round(SL);
+
+  const td = 'padding:6px 16px;border-bottom:0.5px solid #eee;';
+  const tableRows = rows.map(r => {
+    const bg   = r.isCurrent ? 'background:#fff8d6;' : '';
+    const bold = r.isCurrent ? 'font-weight:700;' : '';
+    const mark = r.isCurrent ? '◀' : '';
+    return `<tr style="${bg}${bold}">
+      <td style="${td}text-align:center">${r.lVal.toFixed(1)} t</td>
+      <td style="${td}text-align:center">${r.sl.toFixed(2)} t</td>
+      <td style="${td}text-align:center;font-size:15px">${r.slR} t</td>
+      <td style="${td}color:#d4a000;font-size:13px;text-align:center;width:20px">${mark}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8">
+<title>Schwebeballast — KranTools</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;color:#2c2c2a;background:#fff;font-size:12px;padding:14mm 16mm 20mm}
+  @page{margin:0;size:A4 portrait}
+  @media print{button{display:none}}
+  .header{display:flex;align-items:flex-end;justify-content:space-between;
+    padding-bottom:9px;border-bottom:2px solid #2c2c2a;margin-bottom:14px}
+  .logo{font-size:36px;font-weight:900;color:#2c2c2a;line-height:1;letter-spacing:0.01em;font-family:Arial Black,Arial,sans-serif}
+  .logo span{color:#f0c000}
+  .header-right{font-size:12px;color:#888;text-align:right;line-height:1.6}
+  .section{font-size:9px;font-weight:700;color:#888;margin:0 0 6px;
+    text-transform:uppercase;letter-spacing:0.1em;border-bottom:0.5px solid #ddd;padding-bottom:3px}
+  .result-block{display:inline-flex;align-items:baseline;gap:10px;margin-bottom:14px;
+    padding:9px 16px;background:#f9f8f5;border-left:3px solid #2c2c2a}
+  .result-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-right:4px}
+  .result-val{font-size:30px;font-weight:800;color:#2c2c2a;line-height:1}
+  .result-unit{font-size:24px;font-weight:800;color:#2c2c2a;line-height:1}
+  .result-exact{font-size:11px;color:#888}
+  .inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px 20px;margin-bottom:14px;font-size:11px}
+  .inp-row{display:flex;gap:5px}
+  .inp-lbl{color:#888;white-space:nowrap}
+  .inp-val{font-weight:600}
+  table{width:auto;margin:0 auto;border-collapse:collapse;font-size:12px}
+  th{padding:7px 20px;text-align:center;background:#f5f5f3;border-bottom:1px solid #d3d1c7;
+    font-size:10px;color:#666;font-weight:600;letter-spacing:0.07em;text-transform:uppercase}
+  td{font-size:12px}
+  .footer{position:fixed;bottom:0;left:0;right:0;border-top:0.5px solid #d3d1c7;
+    padding:5px 16mm;font-size:8px;color:#b4b2a9;background:#fff;line-height:1.4}
+</style>
+</head><body>
+
+  <div class="header">
+    <div class="logo">Kran<span>Tools</span></div>
+    <div class="header-right">Raupenkran Schwebeballast<br>Interpolationstabelle</div>
+  </div>
+
+  <div class="section" style="margin-bottom:8px">Eingabewerte</div>
+  <div class="inputs" style="margin-bottom:12px;grid-template-columns:1fr 1fr">
+    <div class="inp-row"><span class="inp-lbl">L — Tatsächliche Traglast:</span><span class="inp-val">${L} t</span></div>
+    <div class="inp-row"><span class="inp-lbl">L1 — Leichtere Traglast (Tabelle):</span><span class="inp-val">${L1} t</span></div>
+    <div class="inp-row"><span class="inp-lbl">SL1 — Schwebeballast bei L1:</span><span class="inp-val">${SL1} t</span></div>
+    <div class="inp-row"><span class="inp-lbl">L2 — Schwerere Traglast (Tabelle):</span><span class="inp-val">${L2} t</span></div>
+    <div class="inp-row"><span class="inp-lbl">SL2 — Schwebeballast bei L2:</span><span class="inp-val">${SL2} t</span></div>
+  </div>
+
+  <div class="result-block" style="margin-bottom:14px">
+    <span class="result-lbl">Schwebeballast SL</span>
+    <span class="result-val">${SLround}<span style="font-size:22px;font-weight:800"> t</span></span>
+    <span class="result-exact">exakt: ${SL.toFixed(2)} t</span>
+  </div>
+
+  <div class="section">Interpolationstabelle — ${L1} t bis ${L2} t in 10 t-Schritten</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Traglast L</th>
+        <th>SL exakt</th>
+        <th>SL gerundet</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+
+  <div class="footer">
+    Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.
+  </div>
+
+  <script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+function toggleBurger(){
+  document.getElementById('burgerBtn').classList.toggle('open');
+  document.getElementById('burgerOverlay').classList.toggle('open');
+  document.getElementById('burgerDrawer').classList.toggle('open');
+}
+</script>
+</body>
+</html>

@@ -788,8 +788,8 @@ function printPDF(){
     }
   }
 
-  // ── Comic: SVG-Snapshots bei 0°,10°,...,80° ──
-  const comicAngles = [0,30,60,89];
+  // ── Comic: SVG-Snapshots bei 0°,15°,30°,45°,60°,75° ──
+  const comicAngles = [0,15,30,45,60,75];
   const comicSVGs = comicAngles.map(a => {
     const w = zieher===1 ? -a : a;
     drawSVG(g, w);
@@ -797,7 +797,6 @@ function printPDF(){
     const clone = svgEl.cloneNode(true);
     clone.setAttribute('width','100%');
     clone.setAttribute('style','display:block;width:100%;height:auto');
-    // Winkel-Label unten einfügen
     const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
     lbl.setAttribute('x','50%'); lbl.setAttribute('y','98%');
     lbl.setAttribute('text-anchor','middle');
@@ -811,42 +810,43 @@ function printPDF(){
   // Restore current angle
   drawSVG(g, effectiveDeg());
 
-  // Comic-Grid: 3 pro Zeile
-  let comicGrid = '';
-  for(let i=0;i<comicSVGs.length;i+=2){
-    comicGrid += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">';
-    for(let j=i;j<Math.min(i+2,comicSVGs.length);j++){
-      comicGrid += `<div style="border:0.5px solid #e0ded8;border-radius:4px;overflow:hidden">${comicSVGs[j]}</div>`;
-    }
-    comicGrid += '</div>';
+  // Comic-Grid: 3x2 Raster
+  let comicGrid = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">';
+  for(let i=0;i<comicSVGs.length;i++){
+    comicGrid += `<div style="border:0.5px solid #e0ded8;border-radius:4px;overflow:hidden">${comicSVGs[i]}</div>`;
   }
+  comicGrid += '</div>';
 
   const html = `<!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8">
 <title>Tandemlift — Lastverteilung</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:system-ui,sans-serif;color:#2c2c2a;padding:12mm;background:#fff}
-  @page{margin:10mm;size:A4 portrait}
-  @media print{body{padding:0}button{display:none}}
-  h1{font-size:15px;font-weight:600;margin-bottom:2px}
-  .logo{font-family:serif;font-size:20px;font-weight:700;letter-spacing:0.04em;margin-bottom:8px}
+  body{font-family:system-ui,sans-serif;color:#2c2c2a;padding:10mm 12mm 14mm;background:#fff;font-size:10px}
+  @page{margin:0;size:A4 portrait}
+  @media print{button{display:none}}
+  .logo{font-size:28px;font-weight:900;color:#2c2c2a;line-height:1;letter-spacing:0.01em;font-family:Arial Black,Arial,sans-serif;margin-bottom:0}
   .logo em{color:#f0c000;font-style:normal}
-  .section{font-size:9px;font-weight:600;color:#888;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.06em;border-bottom:0.5px solid #eee;padding-bottom:2px}
-  table{width:100%;border-collapse:collapse}
-  .disclaimer{font-size:8px;color:#bbb;margin-top:14px;line-height:1.5}
+  .pdf-header{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:7px;border-bottom:2px solid #2c2c2a;margin-bottom:10px}
+  .section{font-size:8px;font-weight:700;color:#888;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.08em;border-bottom:0.5px solid #eee;padding-bottom:2px}
+  table{width:100%;border-collapse:collapse;font-size:10px}
+  .disclaimer{font-size:7px;color:#bbb;margin-top:10px;line-height:1.4;position:fixed;bottom:8mm;left:12mm;right:12mm}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
 </style>
 </head><body>
 
-  <div class="logo">Kran<em>Tools</em></div>
-  <h1>Tandemlift — Lastverteilung</h1>
-  <div style="font-size:10px;color:#888;margin-bottom:10px">${ziehtName} zieht · Hublast: ${Q.toFixed(2)} t</div>
+  <div class="pdf-header">
+    <div class="logo">Kran<em>Tools</em></div>
+    <div style="font-size:11px;color:#888;text-align:right;line-height:1.5">Tandemlift — Lastverteilung<br>${ziehtName} zieht · Hublast: ${Q.toFixed(2)} t</div>
+  </div>
 
-  <div class="section">Eingabewerte</div>
-  <table>${tableRows}</table>
+  <div style="font-size:13px;font-weight:700;color:#2c2c2a;margin-bottom:8px">Berechnung der Zugkräfte beim Drehen einer Last — ${ziehtName} zieht</div>
+
+  <div class="section" style="margin-top:0">Eingabewerte</div>
+  <table style="margin-bottom:8px">${tableRows}</table>
 
   <div class="section">Zugkräfte — 10°-Raster</div>
-  <table>
+  <table style="margin-bottom:8px">
     <thead><tr>
       <th style="${th}">Winkel</th>
       <th style="${th}">Kran 1 (t)</th>
@@ -857,7 +857,7 @@ function printPDF(){
     <tbody>${tblRows}</tbody>
   </table>
 
-  <div class="section" style="margin-top:12px">Hubvorgang — Schrittdarstellung (10°)</div>
+  <div class="section">Hubvorgang — 0° / 15° / 30° / 45° / 60° / 75°</div>
   ${comicGrid}
 
   <div class="disclaimer">Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.</div>
