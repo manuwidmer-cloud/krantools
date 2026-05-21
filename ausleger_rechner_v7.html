@@ -778,40 +778,101 @@ function printPDF(){
 
   const html = `<!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8">
-<title>Ausleger-Rechner</title>
+<title>Ausleger-Rechner – KranTools</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:system-ui,sans-serif;color:#2c2c2a;padding:14mm;background:#fff;font-size:12px}
+  body{font-family:system-ui,sans-serif;color:#2c2c2a;background:#fff;font-size:11px}
   @page{margin:12mm;size:A4 portrait}
-  h1{font-size:14px;font-weight:600;margin-bottom:12px}
-  .result-label{font-size:10px;color:#888;margin-bottom:2px}
-  .result{font-size:28px;font-weight:700;margin-bottom:12px;color:#2c2c2a}
-  .section{font-size:10px;font-weight:600;color:#888;margin:10px 0 4px;
-    text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid #eee;padding-bottom:2px}
-  table{width:100%;border-collapse:collapse}
-  .layout{display:flex;gap:14px;align-items:flex-start;margin-top:8px}
-  .col-left{flex:1;min-width:0}
-  .col-right{width:44%;flex-shrink:0}
   @media print{body{padding:0}button{display:none}}
+
+  /* ── HEADER ── */
+  .pdf-header{display:flex;align-items:flex-end;justify-content:space-between;
+    padding-bottom:8px;border-bottom:1.5px solid #2c2c2a;margin-bottom:12px}
+  .pdf-logo{font-family:Georgia,serif;font-size:22px;font-weight:700;letter-spacing:0.02em;color:#2c2c2a;line-height:1}
+  .pdf-logo span{color:#f0c000}
+  .pdf-title{font-size:11px;color:#888;text-align:right;line-height:1.4}
+
+  /* ── RESULT ── */
+  .result-block{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;
+    padding:8px 12px;background:#f9f8f5;border-left:3px solid #2c2c2a}
+  .result-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.06em}
+  .result-val{font-size:26px;font-weight:700;color:#2c2c2a;line-height:1}
+
+  /* ── SECTION LABELS ── */
+  .section{font-size:9px;font-weight:600;color:#888;margin:0 0 4px;
+    text-transform:uppercase;letter-spacing:0.08em;border-bottom:0.5px solid #e0dfd8;padding-bottom:2px}
+
+  /* ── TABLES ── */
+  table{width:100%;border-collapse:collapse}
+  td{padding:4px 6px;border-bottom:0.5px solid #f0eee8;font-size:10px;vertical-align:top}
+  .lbl{color:#888;width:38%}
+  .val{font-weight:500;color:#2c2c2a}
+
+  /* ── TWO-COLUMN LAYOUT ── */
+  .layout{display:flex;gap:16px;align-items:flex-start;margin-top:0}
+  .col-left{flex:1;min-width:0}
+  .col-right{width:46%;flex-shrink:0}
+
+  /* ── FOOTER ── */
+  .pdf-footer{position:fixed;bottom:0;left:0;right:0;
+    border-top:0.5px solid #d3d1c7;padding:5px 12mm;
+    font-size:8px;color:#b4b2a9;line-height:1.5;background:#fff}
 </style>
 </head><body>
-  <h1>Berechnung minimale Auslegerlänge für Turmkran-Montagen</h1>
 
-  <div class="result-label">Berechnete Minimale Auslegerlänge des Autokrans</div>
-  <div class="result">${ausleger}</div>
-
-  <div class="section">Eingabewerte</div>
-  <table>${tableRows}</table>
-
-  <div class="layout">
-    <div class="col-left">
-      <div class="section" style="margin-top:10px">Schema (massstäblich)</div>
-      ${svgClone.outerHTML}
+  <!-- HEADER -->
+  <div class="pdf-header">
+    <div class="pdf-logo">Kran<span>Tools</span></div>
+    <div class="pdf-title">
+      Berechnung minimale Auslegerlänge<br>für Turmkran-Montagen
     </div>
-    ${gewichtRows ? `<div class="col-right">
-      <div class="section" style="margin-top:10px">Komponentengewichte</div>
-      <table>${gewichtRows}</table>
-    </div>` : ''}
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-block">
+    <div class="result-lbl">Minimale Auslegerlänge Autokran</div>
+    <div class="result-val">${ausleger}</div>
+  </div>
+
+  <!-- TWO COLUMNS -->
+  <div class="layout">
+
+    <!-- LEFT: Eingabewerte + Komponentengewichte -->
+    <div class="col-left">
+      <div class="section">Eingabewerte</div>
+      <table style="margin-bottom:10px">
+        ${pairs.map(([l1,v1,l2,v2])=>`
+        <tr>
+          <td class="lbl">${l1}</td><td class="val">${v1}</td>
+        </tr>
+        ${l2?`<tr><td class="lbl">${l2}</td><td class="val">${v2}</td></tr>`:''}`).join('')}
+      </table>
+
+      ${gewichtRows ? `
+      <div class="section">Komponentengewichte</div>
+      <table>
+        ${(()=>{
+          const rows=gewichtTable.querySelectorAll('tbody tr');
+          return Array.from(rows).map(r=>{
+            const cells=r.querySelectorAll('td');
+            if(cells.length<2) return '';
+            return `<tr><td class="lbl">${cells[0].textContent.trim()}</td><td class="val">${cells[1].textContent.trim()}</td></tr>`;
+          }).join('');
+        })()}
+      </table>` : ''}
+    </div>
+
+    <!-- RIGHT: Grafik -->
+    <div class="col-right">
+      <div class="section">Schema (massstäblich)</div>
+      <div style="margin-top:6px">${svgClone.outerHTML}</div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="pdf-footer">
+    Disclaimer: Alle Berechnungen und Angaben sind ohne Gewähr. Die Tools dienen ausschliesslich als Orientierungshilfe und ersetzen keine offiziellen Angaben von Herstellern oder Normen und sind vor der Verwendung zu prüfen. Sämtliche Tools sind geistiges Eigentum von Manuel Widmer.
   </div>
 
   <script>window.onload=function(){window.print();}<\/script>
