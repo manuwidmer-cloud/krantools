@@ -470,11 +470,11 @@ footer span { font-size: 11px; color: #b4b2a9; letter-spacing: 0.06em; }
   const DEFAULT_PW = 'admin123';
   const getPw = () => localStorage.getItem('kran_admin_pw') || DEFAULT_PW;
 
-  function getActive() {
-    try { return JSON.parse(localStorage.getItem('kran_active_tools') || '[]'); }
+  function getDisabled() {
+    try { return JSON.parse(localStorage.getItem('kran_disabled_tools') || '[]'); }
     catch { return []; }
   }
-  function setActive(arr) { localStorage.setItem('kran_active_tools', JSON.stringify(arr)); }
+  function setDisabled(arr) { localStorage.setItem('kran_disabled_tools', JSON.stringify(arr)); }
 
   function login() {
     const input = document.getElementById('pw-input');
@@ -504,10 +504,10 @@ footer span { font-size: 11px; color: #b4b2a9; letter-spacing: 0.06em; }
   }
 
   function renderTools() {
-    const active = getActive();
+    const disabled = getDisabled();
     const list = document.getElementById('toggle-list');
     list.innerHTML = ALL_TOOLS.map(t => {
-      const on = active.includes(t.id);
+      const on = !disabled.includes(t.id);
       return `
         <div class="toggle-wrap">
           <div class="toggle-row">
@@ -531,10 +531,10 @@ footer span { font-size: 11px; color: #b4b2a9; letter-spacing: 0.06em; }
   }
 
   function toggleTool(id, checked) {
-    let active = getActive();
-    if (checked) { if (!active.includes(id)) active.push(id); }
-    else { active = active.filter(x => x !== id); }
-    setActive(active);
+    let disabled = getDisabled();
+    if (checked) { disabled = disabled.filter(x => x !== id); }
+    else { if (!disabled.includes(id)) disabled.push(id); }
+    setDisabled(disabled);
     const s = document.getElementById('status-' + id);
     s.textContent = checked ? 'Aktiv' : 'Inaktiv';
     s.className = 'toggle-status ' + (checked ? 'on' : 'off');
@@ -546,7 +546,8 @@ footer span { font-size: 11px; color: #b4b2a9; letter-spacing: 0.06em; }
   }
 
   function updateCount() {
-    document.getElementById('active-count').textContent = getActive().length + ' aktiv';
+    const n = ALL_TOOLS.length - getDisabled().length;
+    document.getElementById('active-count').textContent = n + ' aktiv';
   }
 
   function changePassword() {

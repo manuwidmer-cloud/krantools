@@ -268,24 +268,9 @@ footer span {
   <div class="drawer-section">Navigation</div>
   <a class="drawer-item active" href="index.html">Home</a>
   <div class="drawer-section">Tools</div>
-  <a class="drawer-item" href="ausleger_rechner_v7.html">
-    Ausleger-Rechner <span class="drawer-badge live">Live</span>
-  </a>
-  <a class="drawer-item" href="tandemlift_v1.html">
-    Tandemlift-Rechner <span class="drawer-badge live">Live</span>
-  </a>
-  <a class="drawer-item" href="schwebeballast_v2.html">
-    Schwebeballast <span class="drawer-badge live">Live</span>
-  </a>
-  <a class="drawer-item soon">
-    Nutzlastrechner <span class="drawer-badge soon">Bald</span>
-  </a>
-  <a class="drawer-item soon">
-    Achslastrechner <span class="drawer-badge soon">Bald</span>
-  </a>
-  <a class="drawer-item soon">
-    Anschlagmittel <span class="drawer-badge soon">Bald</span>
-  </a>
+  <a class="drawer-item" href="ausleger_rechner_v7.html">Ausleger-Rechner</a>
+  <a class="drawer-item" href="tandemlift_v1.html">Tandemlift-Rechner</a>
+  <a class="drawer-item" href="schwebeballast_v2.html">Schwebeballast</a>
   <div class="drawer-footer">© Manuel Widmer<br>Alle Angaben ohne Gewähr</div>
   <a href="admin.html" style="padding:10px 24px;font-size:11px;color:#b4b2a9;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s" onmouseover="this.style.color='#888780'" onmouseout="this.style.color='#b4b2a9'">Admin</a>
 </div>
@@ -312,21 +297,21 @@ footer span {
 
 <script>
   const ALL_TOOLS = [
-    { id: 'ausleger', name: 'Ausleger-Rechner', desc: 'Turmkran-Montage · Minimale Auslegerlänge', file: 'ausleger_rechner_v7.html' },
-    { id: 'tandemlift', name: 'Tandemlift-Rechner', desc: 'Lastverteilung · Krankräfte nach Drehwinkel', file: 'tandemlift_v1.html' },
-    { id: 'schwebeballast', name: 'Schwebeballast Interpolation', desc: 'Raupenkran · Superlift-Gegengewicht interpolieren', file: 'schwebeballast_v2.html' },
+    { id: 'ausleger', name: 'Ausleger-Rechner', desc: 'Berechnung der benötigten Auslegerlänge des Autokrans für Turmkran Montagen', file: 'ausleger_rechner_v7.html' },
+    { id: 'tandemlift', name: 'Tandemlift-Rechner', desc: 'Drehen einer Last mit zwei Kranen · Zugkräfte nach Drehwinkel', file: 'tandemlift_v1.html' },
+    { id: 'schwebeballast', name: 'Schwebeballast Interpolation', desc: 'Raupenkran · Schwebe-Ballast interpolieren', file: 'schwebeballast_v2.html' },
   ];
 
-  function getActive() {
-    try { return JSON.parse(localStorage.getItem('kran_active_tools') || '[]'); }
+  function getDisabled() {
+    try { return JSON.parse(localStorage.getItem('kran_disabled_tools') || '[]'); }
     catch { return []; }
   }
 
   function render() {
-    const active = getActive();
-    const visible = ALL_TOOLS.filter(t => active.includes(t.id));
+    const disabled = getDisabled();
+    const visible = ALL_TOOLS.filter(t => !disabled.includes(t.id));
     const list = document.getElementById('tool-list');
-    document.getElementById('tools-label').textContent = `Tools — ${visible.length} verfügbar`;
+    document.getElementById('tools-label').style.display = 'none';
 
     if (!visible.length) {
       list.innerHTML = '<div class="empty-state"><p>Noch keine Tools aktiv.</p></div>';
